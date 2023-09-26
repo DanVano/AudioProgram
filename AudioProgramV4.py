@@ -46,6 +46,8 @@ def songtagsave(songfile, NSF):
     audiod3.tag.save()
     os.rename((f"{root}\\{songfile}"), (f"{root}\\{NSF}"))
 
+            ### A function to print completed song info
+
 def endprint(songfile, NSF):
     audiod3 = eyed3.load(f"{root}//{NSF}")
     print('vvv Song is fixed vvv')
