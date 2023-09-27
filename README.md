@@ -5,8 +5,10 @@ This python program was built to clean up MP3 file names downloaded from Youtube
 
 # How to use the program
 Install pip package   python3 -m pip install eyeD3. 
+
 Run the file. 
-Input your Music folder directory. 
+
+Input your Music folder directory or hit x for default 
 
 To remove any extra website tags and song name tags, add the tag to the lists. 'DLweb, DLtags'
 
