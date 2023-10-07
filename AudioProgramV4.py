@@ -7,33 +7,6 @@ import eyed3
 import logging
 logging.getLogger("eyed3.mp3.headers").setLevel(logging.CRITICAL)
 
-print("""Welcome to the MP3 filename cleaner and ID3 metadata input program
-       
-                        """)
-
-            ### Music Folder Directory
-
-## Default Music folder
-musicfolder = ('C:/Users/vanov/PythonPrograms/Music/musictest')
-    
-## Input custom music folder directory
-mfinput = input("""Please enter your Music folder directory (x for default):
-example: (C:/Users/vanov/PythonPrograms/Music/musictest)
-:""")                
-if 'x' == mfinput:
-    musicfolder = ('C:/Users/vanov/PythonPrograms/Music/musictest')
-else:
-    musicfolder = mfinput
-print('')
-      
-            ### Youtube song tags to remove from the filename
-
-DLweb = ('[ytmp3.page] ', 'yt5s.io - ', '[YT2mp3.info] - ')
-DLtags = [' (Lyric Video)', ' (Audio)', ' (Official Audio)', ' (Official Music Video)', ' (Lyrics)', ' (Official Video)', ' (Audio Only)', ' (Official Lyric Video)', 
-            ' Official Video', ' (320 kbps)', ' (320kbps)', ' Official Lyric Video', ' (getmp3.pro)', ' [Lyrics]',  ' (Visualizer)']
-songfile= []
-NSF= songfile
-
             ### A function to insert and save Song files ID3 metadata
 
 def songtagsave(songfile, NSF):
@@ -50,10 +23,58 @@ def songtagsave(songfile, NSF):
 
 def endprint(songfile, NSF):
     audiod3 = eyed3.load(f"{root}//{NSF}")
-    print('vvv Song is fixed vvv')
+    print('vvv  Song is Fixed!  vvv')
     print('  Filename: ', NSF)
     print('  Artist: ', audiod3.tag.artist)
     print('  Title: ', audiod3.tag.title)
+
+            ###Start of program
+songfile= []
+NSF= songfile
+
+print("""Welcome to the MP3 filename cleaner and ID3 metadata input program.
+With this program you can remove Youtube tags and Website tags from your filename
+for greater readability and input Artist and Song name into the metadata for IOS
+and Andriod music apps.
+      """)
+
+            ### Music Folder Directory
+
+    ## Default Music folder
+musicfolder = ('C:/Users/vanov/PythonPrograms/Music/musictest')
+
+    ## Input for custom music folder directory
+mf_input = input("""Please enter your Music folder directory.
+example: (C:/Users/vanov/PythonPrograms/Music/musictest)
+(x for default)                
+:""")                
+if mf_input != 'x' and not '\\' in mf_input:
+    musicfolder = mf_input
+elif '\\' in mf_input:
+    musicfolder= mf_input.replace('\\','/')
+    print(musicfolder, 'replaced')    
+print('')
+      
+            ### Default tags to remove from the song filename
+
+DLweb = ['[ytmp3.page] ', 'yt5s.io - ', '[YT2mp3.info] - ']
+DLtags = [' (Lyric Video)', ' (Audio)', ' (Official Audio)', ' (Official Music Video)', ' (Lyrics)', ' (Official Video)', ' (Audio Only)', ' (Official Lyric Video)', 
+            ' Official Video', ' (320 kbps)', ' (320kbps)', ' Official Lyric Video', ' (getmp3.pro)', ' [Lyrics]',  ' (Visualizer)']
+
+    ## Input for custom Website tags and Youtube Tags
+DLweb_input = input("""Input any custom Website tags you would like to remove.                    
+Defaults = [ytmp3.page], yt5s.io -, [YT2mp3.info] -)     
+(x for default)                
+:""")
+if DLweb_input != 'x':
+    DLweb.append(DLweb_input + ' ')
+print('')
+DLtags_input = input("""Input any custom Youtube song name tags you would like to remove.    
+(x for default)                
+:""")
+if DLtags_input != 'x':
+    DLtags.append(' ' + DLtags_input)
+print('')
 
             ### A For loop to scan the Directory for Mp3 files and opens them
 
@@ -99,11 +120,20 @@ for root, dirs, files in os.walk(musicfolder):
                     audiod3.tag.title = NSF[:-4].strip()
                     audiod3.tag.save()
                     os.rename((f"{root}\\{songfile}"), (f"{root}\\{NSF}"))
-                    print('vvv Song is fixed vvv')
+                    print('vvv  Song is Fixed!  vvv')
                     print('  Filename: ', NSF)
                     print('  Artist: None given, songname as placeholder')
                     print('  Title: ', audiod3.tag.title)
+                else:
+                    print('vvv  Song is Fixed!  vvv')
+                    print('  Filename: ', NSF)
+                    print('  Just removed _ from the filename')
+                    os.rename((f"{root}\\{songfile}"), (f"{root}\\{NSF}"))
         else:
-            print('Music naming program has completed. Updated ID3 metadata tags and the Filename ')
+            print('File below is not a MP3')
+            print(songfile)
             print('')
+    print('')
+    print('Music naming program has completed. Updated ID3 metadata tags and the Filename ')
+    print('')
     break
