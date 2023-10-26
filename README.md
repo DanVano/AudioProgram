@@ -1,13 +1,19 @@
    ### AudioProgramV4
 
 # About
-This python program was built to clean up MP3 file names downloaded from Youtube for better readability and Input song title, artist info, and album artist info into the files ID3 metadata for better reabability when using mobile music apps.
+This Python program is a robust tool designed to enhance the organization and readability of your MP3 files, particularly those downloaded from YouTube. Here are the key features of this program:
 
-The script then prompts the user for their music folder directory and any custom website or YouTube tags they want to remove from their filenames.
+File Renaming: The script improves the readability of your music library by cleaning up the filenames of your MP3 files. It removes any unwanted tags, such as those related to websites or YouTube, that may have been included in the filenames during download.
 
-It walks through the specified directory, checks each file to see if it’s an MP3 file, removes any specified tags from its filename, and calls songtagsave() to save the ID3 tags in the file and calls endprint() to print the file data for the user.
+ID3 Tag Editing: The program inputs song title, artist information, and album artist details into the ID3 metadata of the files. This feature enhances the readability and organization of your music files when using mobile music apps.
 
-Also, please be aware that this script will rename your files and modify their ID3 tags in place. It’s recommended to back up your files before running this script to prevent any accidental data loss.
+User Customization: The script prompts users to input their music folder directory and any custom tags they wish to remove from their filenames. This allows for a personalized and efficient cleanup process.
+
+Directory Walkthrough: The script traverses through the specified directory, identifies each MP3 file, and applies the cleanup and ID3 tag editing processes.
+
+Data Presentation: After processing each file, the script calls an endprint() function to display the updated file data to the user. This allows users to review the changes made.
+
+Please note that this script modifies your files directly by renaming them and altering their ID3 tags. To prevent accidental data loss, it’s recommended to back up your files before running this script.
 
 # How to use the program
 Install pip package   python3 -m pip install eyeD3. 
