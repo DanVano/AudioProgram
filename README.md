@@ -1,7 +1,7 @@
    ### AudioProgramV4
-
+Final verison 
 # About
-This Python program is a robust tool designed to enhance the organization and readability of your MP3 files, particularly those downloaded from YouTube. Here are the key features of this program:
+This Python program is the final version, subject to potential minor tweaks in the future. It is a robust tool designed to enhance the organization and readability of your MP3 files, particularly those downloaded from YouTube. Here are the key features of this program:
 
 File Renaming: The script improves the readability of your music library by cleaning up the filenames of your MP3 files. It removes any unwanted tags, such as those related to websites or YouTube, that may have been included in the filenames during download.
 
