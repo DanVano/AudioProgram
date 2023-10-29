@@ -28,7 +28,7 @@ Input any extra website tags and song name tags or hit x for default.
 Built by importing eyed3 from https://eyed3.readthedocs.io/en/latest/
 
 
-# Project Status
+### Project Status
 Final verison
 
 dvanovcan@gmail.com
