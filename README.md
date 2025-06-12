@@ -28,7 +28,7 @@ AudioProgram v7.a is a powerful and user-friendly script designed to clean and o
    ```
 
 2. Set Up the Program Folder  
-   - Place `main.py` and the `AudioProgramV6` (or latest version folder) in the same directory.  
+   - Place `main.py` and the `AudioProgramV7` (or latest version folder) in the same directory.  
    - Ensure your MP3 files are in a folder you can reference during execution.
 
 3. Run the Program  
