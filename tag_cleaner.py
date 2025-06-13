@@ -23,18 +23,22 @@ def set_id3_tags(filepath, artist, title):
         print(f"Permission denied: {filepath} is read-only.")
     except Exception as e:
         print(f"Error saving ID3 tags to {filepath}: {e}")
-
 def parse_shazam_csv(file_path):
     import csv
     result = []
-    with open(file_path, mode='r', encoding='utf-8') as f:
-        reader = csv.DictReader(f, fieldnames=["Index", "TagTime", "Title", "Artist", "URL", "TrackKey"])
-        next(reader, None)
-        for row in reader:
-            result.append({
-                'date': row["TagTime"],
-                'artist': row["Artist"],
-                'title': row["Title"],
-                'combined_track_info': f"{row['Artist']} - {row['Title']}"
-            })
+    try:
+        with open(file_path, mode='r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, fieldnames=["Index", "TagTime", "Title", "Artist", "URL", "TrackKey"])
+            next(reader, None)
+            for row in reader:
+                result.append({
+                    'date': row["TagTime"],
+                    'artist': row["Artist"],
+                    'title': row["Title"],
+                    'combined_track_info': f"{row['Artist']} - {row['Title']}"
+                })
+    except FileNotFoundError:
+        print(f"Error: CSV file not found at path: {file_path}")
+    except Exception as e:
+        print(f"Error reading CSV: {e}")
     return result
