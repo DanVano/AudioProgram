@@ -15,27 +15,37 @@ def download_youtube_audio(youtube_url, output_filename="downloaded.mp3"):
         "format": "mp3",
         "quality": 0
     }
-    
-    response = requests.post(endpoint, headers=headers, json=payload)
-    if response.status_code != 200:
-        raise RuntimeError(f"Request failed. Status: {response.status_code}, Body: {response.text}")
-    resp_json = response.json()
 
-    download_link = resp_json["progress"]["downloadLink"]
+    try:
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"Failed to get download link: {e}")
+
+    try:
+        resp_json = response.json()
+        download_link = resp_json["progress"]["downloadLink"]
+    except (KeyError, ValueError) as e:
+        raise RuntimeError(f"Unexpected response structure: {e}")
 
     config = read_user_config()
-    music_folder = config["music_folder"]
+    music_folder = config.get("music_folder", "downloads")
     os.makedirs(music_folder, exist_ok=True)
-
     file_path = os.path.join(music_folder, output_filename)
-    dl_response = requests.get(download_link, stream=True)
-    if dl_response.status_code != 200:
-        raise RuntimeError(f"File download failed. Status: {dl_response.status_code}")
 
-    with open(file_path, "wb") as f:
-        for chunk in dl_response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
+    try:
+        dl_response = requests.get(download_link, stream=True, timeout=60)
+        dl_response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"File download failed: {e}")
+
+    try:
+        with open(file_path, "wb") as f:
+            for chunk in dl_response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+    except IOError as e:
+        raise RuntimeError(f"Failed to write file: {e}")
 
     return file_path
 
