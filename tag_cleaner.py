@@ -1,6 +1,7 @@
 import eyed3
 import os
 from utils import read_user_config
+from datetime import datetime
 
 def clean_filename(filename, song_tags, web_tags):
     for tag in song_tags + web_tags:
@@ -16,7 +17,7 @@ def set_id3_tags(filepath, artist, title):
         print(f"Warning: Could not load file: {filepath}. ID3 tags not set.")
         return
     if audio.tag is None:
-        audio.initTag()   
+        audio.initTag()
     audio.tag.artist = artist
     audio.tag.album_artist = artist
     audio.tag.title = title
@@ -26,6 +27,7 @@ def set_id3_tags(filepath, artist, title):
         print(f"Permission denied: {filepath} is read-only.")
     except Exception as e:
         print(f"Error saving ID3 tags to {filepath}: {e}")
+
 def parse_shazam_csv(file_path):
     import csv
     result = []
@@ -34,12 +36,16 @@ def parse_shazam_csv(file_path):
             reader = csv.DictReader(f, fieldnames=["Index", "TagTime", "Title", "Artist", "URL", "TrackKey"])
             next(reader, None)
             for row in reader:
-                result.append({
-                    'date': row["TagTime"],
-                    'artist': row["Artist"],
-                    'title': row["Title"],
-                    'combined_track_info': f"{row['Artist']} - {row['Title']}"
-                })
+                try:
+                    tag_time = datetime.strptime(row["TagTime"], "%Y-%m-%dT%H:%M:%S")
+                    result.append({
+                        'date': tag_time,
+                        'artist': row["Artist"],
+                        'title': row["Title"],
+                        'combined_track_info': f"{row['Artist']} - {row['Title']}"
+                    })
+                except ValueError as ve:
+                    print(f"Skipping row with invalid date: {row['TagTime']} - {ve}")
     except FileNotFoundError:
         print(f"Error: CSV file not found at path: {file_path}")
     except Exception as e:
