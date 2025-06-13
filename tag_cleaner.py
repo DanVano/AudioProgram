@@ -13,11 +13,16 @@ def set_id3_tags(filepath, artist, title):
         print(f"Warning: Could not load file: {filepath}. ID3 tags not set.")
         return
     if audio.tag is None:
-        audio.initTag()
+        audio.initTag()   
     audio.tag.artist = artist
     audio.tag.album_artist = artist
     audio.tag.title = title
-    audio.tag.save()
+    try:
+        audio.tag.save()
+    except PermissionError:
+        print(f"Permission denied: {filepath} is read-only.")
+    except Exception as e:
+        print(f"Error saving ID3 tags to {filepath}: {e}")
 
 def parse_shazam_csv(file_path):
     import csv
