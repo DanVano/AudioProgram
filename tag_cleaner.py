@@ -5,7 +5,10 @@ from utils import read_user_config
 def clean_filename(filename, song_tags, web_tags):
     for tag in song_tags + web_tags:
         filename = filename.replace(tag, "")
-    return filename.strip()
+    filename = filename.strip().strip("-").strip()
+    if not filename.endswith(".mp3"):
+        filename += ".mp3"
+    return filename
 
 def set_id3_tags(filepath, artist, title):
     audio = eyed3.load(filepath)
