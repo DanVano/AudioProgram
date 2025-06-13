@@ -1,0 +1,5 @@
+music_folder=C:/Desktop/Music
+csv_path=C:/Desktop/Music/shazam_library.csv
+song_tags=(Lyric Video)|(Audio)|(Official Audio)|(Official Music Video)|(Lyrics)|(Official Video)|(Audio Only)|(Official Lyric Video)|Official Video|(320 kbps)|(320kbps)|Official Lyric Video|(getmp3.pro)|[Lyrics]|(Visualizer)
+web_tags=[ytmp3.page] |yt5s.io - |[YT2mp3.info] - 
+last_scanned_date=2025-03-10
