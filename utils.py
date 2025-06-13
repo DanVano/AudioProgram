@@ -17,14 +17,18 @@ def read_user_config():
     }
 
     if os.path.exists(user_config_path):
-        with open(user_config_path, "r", encoding="utf-8") as f:
-            for line in f:
-                if '=' in line:
-                    key, val = line.strip().split("=", 1)
-                    if key in ["song_tags", "web_tags"]:
-                        config[key] = val.split("|") if val else []
-                    else:
-                        config[key] = val
+        try:
+            with open(user_config_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if '=' in line:
+                        key, val = line.strip().split("=", 1)
+                        if key in ["song_tags", "web_tags"]:
+                            config[key] = val.split("|") if val else []
+                        else:
+                            config[key] = val
+        except Exception as e:
+            print(f"Warning: Failed to load config. Using defaults. Error: {e}")
+
     return config
 
 def save_user_config(config):
