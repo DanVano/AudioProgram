@@ -4,8 +4,15 @@ from input_handler import update_and_show
 from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
 from downloader import download_youtube_audio, get_youtube_url_from_track
 from utils import read_user_config, save_user_config
+from datetime import datetime
 
 config = read_user_config()
+
+# Parse last scanned date as datetime
+try:
+    last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
+except ValueError:
+    last_scanned_date = datetime.min
 
 root = tk.Tk()
 root.title("MP3 Downloader GUI")
@@ -24,6 +31,7 @@ def run_cleaner():
     print_output("[INFO] Cleaner run complete (simulation)")
 
 def run_downloader():
+    global last_scanned_date
     print_output("\n[INFO] Running Shazam downloader...")
 
     try:
@@ -34,7 +42,7 @@ def run_downloader():
 
         count = 0
         for entry in entries:
-            if entry['date'] <= config["last_scanned_date"]:
+            if entry['date'] <= last_scanned_date:
                 break
             try:
                 yt_url = get_youtube_url_from_track(entry['artist'], entry['title'])
@@ -42,7 +50,8 @@ def run_downloader():
                 filepath = download_youtube_audio(yt_url, output_name)
                 set_id3_tags(filepath, entry['artist'], entry['title'])
                 print_output(f"[OK] Downloaded: {output_name}")
-                config["last_scanned_date"] = entry['date']
+                last_scanned_date = entry['date']
+                config["last_scanned_date"] = last_scanned_date.strftime("%Y-%m-%dT%H:%M:%S")
                 count += 1
             except Exception as e:
                 print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
