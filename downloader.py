@@ -1,7 +1,11 @@
 import requests
 import os
-from config import rapidapi_key
 from utils import read_user_config, save_user_config
+
+config = read_user_config()
+rapidapi_key = config.get("rapidapi_key", "")
+if not rapidapi_key:
+    raise RuntimeError("Missing RapidAPI key in user_config.txt")
 
 def download_youtube_audio(youtube_url, output_filename="downloaded.mp3"):
     endpoint = "https://youtube-to-mp315.p.rapidapi.com/download"
