@@ -1,4 +1,5 @@
 import tkinter as tk
+import threading
 from tkinter import messagebox
 from input_handler import update_and_show
 from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
@@ -26,44 +27,49 @@ def print_output(msg):
 # ========== ACTIONS ==========
 
 def run_cleaner():
-    print_output("\n[INFO] Running cleaner...")
-    # Placeholder logic
-    print_output("[INFO] Cleaner run complete (simulation)")
+    def task():
+        print_output("\n[INFO] Running cleaner...")
+        # Placeholder logic
+        print_output("[INFO] Cleaner run complete (simulation)")
+    threading.Thread(target=task, daemon=True).start()
 
 def run_downloader():
-    global last_scanned_date
-    print_output("\n[INFO] Running Shazam downloader...")
+    def task():
+        global last_scanned_date
+        print_output("\n[INFO] Running Shazam downloader...")
 
-    try:
-        entries = parse_shazam_csv(config["csv_path"])
-        if not entries:
-            print_output("[WARN] No valid entries found in CSV.")
-            return
+        try:
+            entries = parse_shazam_csv(config["csv_path"])
+            if not entries:
+                print_output("[WARN] No valid entries found in CSV.")
+                return
 
-        count = 0
-        for entry in entries:
-            if entry['date'] <= last_scanned_date:
-                break
-            try:
-                yt_url = get_youtube_url_from_track(entry['artist'], entry['title'])
-                output_name = clean_filename(f"{entry['artist']} - {entry['title']}.mp3", config["song_tags"], config["web_tags"])
-                filepath = download_youtube_audio(yt_url, output_name)
-                set_id3_tags(filepath, entry['artist'], entry['title'])
-                print_output(f"[OK] Downloaded: {output_name}")
-                last_scanned_date = entry['date']
-                config["last_scanned_date"] = last_scanned_date.strftime("%Y-%m-%dT%H:%M:%S")
-                count += 1
-            except Exception as e:
-                print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
+            count = 0
+            for entry in entries:
+                if entry['date'] <= last_scanned_date:
+                    break
+                try:
+                    yt_url = get_youtube_url_from_track(entry['artist'], entry['title'])
+                    output_name = clean_filename(f"{entry['artist']} - {entry['title']}.mp3", config["song_tags"], config["web_tags"])
+                    filepath = download_youtube_audio(yt_url, output_name)
+                    set_id3_tags(filepath, entry['artist'], entry['title'])
+                    print_output(f"[OK] Downloaded: {output_name}")
+                    last_scanned_date = entry['date']
+                    config["last_scanned_date"] = last_scanned_date.strftime("%Y-%m-%dT%H:%M:%S")
+                    count += 1
+                except Exception as e:
+                    print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
 
-        if count > 0:
-            save_user_config(config)
-            print_output(f"[INFO] {count} new tracks downloaded.")
-        else:
-            print_output("[INFO] No new tracks to download.")
-    except Exception as e:
-        print_output(f"[ERROR] Unexpected error: {e}")
-        messagebox.showerror("Error", f"Something went wrong during download:\n{e}")
+            if count > 0:
+                save_user_config(config)
+                print_output(f"[INFO] {count} new tracks downloaded.")
+            else:
+                print_output("[INFO] No new tracks to download.")
+        except Exception as e:
+            print_output(f"[ERROR] Unexpected error: {e}")
+            messagebox.showerror("Error", f"Something went wrong during download:\n{e}")
+
+    threading.Thread(target=task, daemon=True).start()
 
 # ========== MENU ==========
 
