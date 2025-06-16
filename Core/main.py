@@ -1,14 +1,15 @@
-import tkinter as tk
 import threading
+import tkinter as tk
 from tkinter import messagebox, ttk
-from input_handler import update_and_show
-from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
-from downloader import download_youtube_audio, get_youtube_url_from_track
-from utils import read_user_config, save_user_config
 from datetime import datetime
 
-config = read_user_config()
+from core.input_handler import update_and_show
+from core.tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
+from core.downloader import download_youtube_audio, get_youtube_url_from_track
+from core.utils import read_user_config, save_user_config
 
+
+config = read_user_config()
 # Parse last scanned date as datetime
 try:
     last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
