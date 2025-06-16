@@ -1,5 +1,5 @@
 # AudioProgram v8.0  
-*A Python tool to organize, tag, and download MP3s with a simple GUI*
+**A Python tool to organize, tag, and download MP3s with a simple GUI**
 
 ---
 
