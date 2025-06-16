@@ -1,6 +1,6 @@
 import tkinter as tk
 import threading
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 from input_handler import update_and_show
 from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
 from downloader import download_youtube_audio, get_youtube_url_from_track
@@ -19,6 +19,8 @@ root = tk.Tk()
 root.title("MP3 Downloader GUI")
 text_output = tk.Text(root, height=30, width=75)
 text_output.pack()
+progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+progress.pack()
 
 def print_output(msg):
     text_output.insert(tk.END, msg + "\n")
@@ -44,6 +46,9 @@ def run_downloader():
                 print_output("[WARN] No valid entries found in CSV.")
                 return
 
+            progress["value"] = 0
+            progress["maximum"] = len(entries)
+
             count = 0
             for entry in entries:
                 if entry['date'] <= last_scanned_date:
@@ -60,11 +65,17 @@ def run_downloader():
                 except Exception as e:
                     print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
 
+                progress["value"] += 1
+                root.update_idletasks()
+
             if count > 0:
                 save_user_config(config)
                 print_output(f"[INFO] {count} new tracks downloaded.")
             else:
                 print_output("[INFO] No new tracks to download.")
+
+            progress["value"] = 0  # Reset after all done
+
         except Exception as e:
             print_output(f"[ERROR] Unexpected error: {e}")
             messagebox.showerror("Error", f"Something went wrong during download:\n{e}")
