@@ -1,6 +1,7 @@
-import requests
 import os
-from utils import read_user_config, save_user_config
+import requests
+
+from core.utils import read_user_config, save_user_config
 
 config = read_user_config()
 rapidapi_key = config.get("rapidapi_key", "")
