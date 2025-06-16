@@ -18,6 +18,10 @@ except ValueError:
 
 root = tk.Tk()
 root.title("MP3 Downloader GUI")
+
+header = ttk.Label(root, text="AudioProgram v8.0", font=("Segoe UI", 16, "bold"))
+header.pack(pady=(12, 6))
+
 text_output = tk.Text(root, height=30, width=75)
 text_output.pack()
 progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
@@ -26,6 +30,7 @@ progress.pack()
 def print_output(msg):
     text_output.insert(tk.END, msg + "\n")
     text_output.see(tk.END)
+
 
 # ========== ACTIONS ==========
 
