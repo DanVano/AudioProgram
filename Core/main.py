@@ -86,12 +86,12 @@ def run_downloader():
 # ========== MENU ==========
 
 menu_items = [
-    ("1. Run MP3 Cleaner", run_cleaner),
-    ("2. Run Shazam Downloader", run_downloader),
+    ("1. Run Shazam Downloader", run_downloader),
+    ("2. Run MP3 Name Cleaner", run_cleaner),
     ("3. Set Music Folder", lambda: update_and_show(root, text_output, config, "music_folder", "music folder", ask_path=True)),
-    ("4. Set CSV Path", lambda: update_and_show(root, text_output, config, "csv_path", "CSV path")),
-    ("5. Set Song Tags", lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True)),
-    ("6. Set Web Tags", lambda: update_and_show(root, text_output, config, "web_tags", "web tags", is_list=True)),
+    ("4. Set Shazam Song :ist CSV Path", lambda: update_and_show(root, text_output, config, "csv_path", "CSV path")),
+    ("5. Add to Song Tags Removal List", lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True)),
+    ("6. Add to Web Tags Removal List", lambda: update_and_show(root, text_output, config, "web_tags", "web tags", is_list=True)),
     ("7. Exit", root.destroy)
 ]
 
