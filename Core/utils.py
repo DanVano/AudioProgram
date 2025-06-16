@@ -1,6 +1,7 @@
 import os
 
-user_config_path = "user_config.txt"
+
+user_config_path = user_config_path = os.path.join("Config", "user_config.txt")
 
 def read_user_config():
     config = {
