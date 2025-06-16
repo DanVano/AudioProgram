@@ -23,7 +23,7 @@ def read_user_config():
                     if '=' in line:
                         key, val = line.strip().split("=", 1)
                         if key in ["song_tags", "web_tags"]:
-                            config[key] = val.split("|") if val else []
+                            config[key] = [v.strip() for v in val.split("|") if v.strip()]
                         else:
                             config[key] = val
         except Exception as e:
