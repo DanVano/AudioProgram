@@ -1,6 +1,9 @@
 @echo off
 echo === AudioProgram Setup ===
 
+:: Go up one directory to the project root
+cd ..
+
 :: Optional: check if Python is installed
 python --version >nul 2>&1
 IF %ERRORLEVEL% NEQ 0 (
@@ -15,6 +18,6 @@ pip install -r requirements.txt
 
 :: Run the program
 echo Launching AudioProgram...
-python main.py
+python audio_program/main.py
 
 pause
