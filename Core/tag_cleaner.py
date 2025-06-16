@@ -1,7 +1,10 @@
-import eyed3
 import os
-from utils import read_user_config
 from datetime import datetime
+
+import eyed3
+
+from core.utils import read_user_config
+
 
 def clean_filename(filename, song_tags, web_tags):
     for tag in song_tags + web_tags:
