@@ -22,7 +22,9 @@ root.title("MP3 Downloader GUI")
 header = ttk.Label(root, text="AudioProgram v8.0", font=("Segoe UI", 16, "bold"))
 header.pack(pady=(12, 6))
 
-text_output = tk.Text(root, height=30, width=75)
+text_output = tk.Text(root, height=36, width=90)
+text_output.pack(padx=40, pady=6)
+
 text_output.pack()
 progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
 progress.pack()
@@ -91,22 +93,22 @@ def run_downloader():
 # ========== MENU ==========
 
 menu_items = [
-    ("1. Run Shazam Downloader", run_downloader),
-    ("2. Run MP3 Name Cleaner", run_cleaner),
-    ("3. Set Music Folder", lambda: update_and_show(root, text_output, config, "music_folder", "music folder", ask_path=True)),
-    ("4. Set Shazam Song :ist CSV Path", lambda: update_and_show(root, text_output, config, "csv_path", "CSV path")),
-    ("5. Add to Song Tags Removal List", lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True)),
-    ("6. Add to Web Tags Removal List", lambda: update_and_show(root, text_output, config, "web_tags", "web tags", is_list=True)),
-    ("7. Exit", root.destroy)
+    (" 1. Run Shazam Downloader ", run_downloader),
+    (" 2. Run MP3 Name Cleaner ", run_cleaner),
+    (" 3. Set Music Folder ", lambda: update_and_show(root, text_output, config, "music_folder", "music folder", ask_path=True)),
+    (" 4. Set Shazam Song : List CSV Path ", lambda: update_and_show(root, text_output, config, "csv_path", "CSV path")),
+    (" 5. Add to Song Tags Removal List ", lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True)),
+    (" 6. Add to Web Tags Removal List ", lambda: update_and_show(root, text_output, config, "web_tags", "web tags", is_list=True)),
+    (" 7. Exit ", root.destroy)
 ]
 
 for text, command in menu_items:
     tk.Button(root, text=text, command=command).pack()
 
 print_output("Current Config:")
-print_output(f"- CSV: {config.get('csv_path', '[Not Set]')}")
-print_output(f"- Tags: {config.get('song_tags', [])}")
-print_output(f"- Web Tags: {config.get('web_tags', [])}")
-print_output(f"- Last Scanned: {config.get('last_scanned_date', '[Not Set]')}")
+print_output(f"   - CSV: {config.get('csv_path', '[Not Set]')}")
+print_output(f"   - Song Tags: {config.get('song_tags', [])}")
+print_output(f"   - Website Tags: {config.get('web_tags', [])}")
+print_output(f"   - Last Scanned: {config.get('last_scanned_date', '[Not Set]')}")
 
 root.mainloop()
