@@ -7,4 +7,5 @@ if not exist "Core\main.py" (
     exit /b 1
 )
 python Core/main.py
-pause
+if errorlevel 1 pause
+
