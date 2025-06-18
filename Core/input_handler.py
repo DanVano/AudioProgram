@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import simpledialog
 
-from core.utils import update_user_config
+from utils import update_user_config
 
 def update_text_result(text_widget, label, value):
     text_widget.insert(tk.END, f"{label}:\n{value}\n\n")
