@@ -1,4 +1,10 @@
 @echo off
+echo Starting Audio Program...
 cd ..
-python audio_program/main.py
+if not exist "Core\main.py" (
+    echo Error: Core\main.py not found!
+    pause
+    exit /b 1
+)
+python Core/main.py
 pause
