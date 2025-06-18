@@ -8,7 +8,6 @@ from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
 from downloader import download_youtube_audio, get_youtube_url_from_track
 from utils import read_user_config, save_user_config
 
-
 config = read_user_config()
 # Parse last scanned date as datetime
 try:
@@ -16,23 +15,41 @@ try:
 except ValueError:
     last_scanned_date = datetime.min
 
+# === GUI Setup ===
 root = tk.Tk()
-root.title("MP3 Downloader GUI")
+root.title("Audio Program v8.0")
+root.configure(bg="#242424")  # Dark mode background
 
-header = ttk.Label(root, text="AudioProgram v8.0", font=("Segoe UI", 16, "bold"))
+header = tk.Label(
+    root,
+    text="MP3 Downloader and Filename Cleaner",
+    font=("Segoe UI", 20, "bold"),
+    bg="#242424",
+    fg="#F8F8F8"
+)
 header.pack(pady=(12, 6))
 
-text_output = tk.Text(root, height=36, width=90)
-text_output.pack(padx=40, pady=6)
+text_output = tk.Text(
+    root,
+    height=20,
+    width=90,
+    bg="#242424",
+    fg="#F8F8F8",
+    insertbackground="#F8F8F8",     # White text cursor
+    highlightbackground="#333",
+    highlightcolor="#444",
+    padx=16,    # Internal left/right padding (inside the text box)
+    pady=10,     # Internal top/bottom padding (inside the text box)
+    font=("Segoe UI", 12)
+)
+text_output.pack(padx=16, pady=6)    # External padding (around the box)
 
-text_output.pack()
 progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
-progress.pack()
+progress.pack(pady=6)
 
 def print_output(msg):
     text_output.insert(tk.END, msg + "\n")
     text_output.see(tk.END)
-
 
 # ========== ACTIONS ==========
 
@@ -103,7 +120,20 @@ menu_items = [
 ]
 
 for text, command in menu_items:
-    tk.Button(root, text=text, command=command).pack()
+    tk.Button(
+        root,
+        text=text,
+        command=command,
+        bg="#333",
+        fg="#F8F8F8",
+        activebackground="#444",
+        activeforeground="#FFF",
+        highlightbackground="#555",
+        bd=0,
+        font=("Segoe UI", 12),
+        width=32,   # fixed width in characters (adjust as needed)
+        height=1    # fixed height in text lines (adjust as needed)
+    ).pack(pady=2)
 
 print_output("Current Config:")
 print_output(f"   - CSV: {config.get('csv_path', '[Not Set]')}")
