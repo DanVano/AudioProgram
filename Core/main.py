@@ -1,5 +1,6 @@
 import threading
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import messagebox, ttk
 from datetime import datetime
 
@@ -7,6 +8,44 @@ from input_handler import update_and_show
 from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
 from downloader import download_youtube_audio, get_youtube_url_from_track
 from utils import read_user_config, save_user_config
+
+# Move to Utils after #
+
+def print_tag_list(label, taglist, text_widget, sep="   |   "):
+    bullet = "   - "
+    # Three spaces after the colon
+    first_line_prefix = f"{bullet}{label}:   "
+    tag_strs = [str(tag).strip("'") for tag in taglist]
+    font = tkfont.Font(font=text_widget.cget("font"))
+    widget_pixel_width = text_widget.winfo_width()
+    if widget_pixel_width == 1:
+        widget_pixel_width = font.measure(" " * int(text_widget.cget("width")))
+
+    hanging_indent = " " * len(first_line_prefix)
+    prefix_width = font.measure(first_line_prefix)
+    indent_width = font.measure(hanging_indent)
+
+    line = first_line_prefix
+    line_width = prefix_width
+    output_lines = []
+
+    for i, tag in enumerate(tag_strs):
+        addition = (sep if i > 0 else "") + tag
+        addition_width = font.measure(addition)
+        if line_width + addition_width > widget_pixel_width and line != first_line_prefix:
+            output_lines.append(line)
+            line = hanging_indent + tag
+            line_width = indent_width + font.measure(tag)
+        else:
+            if line == first_line_prefix:
+                line += tag
+                line_width += font.measure(tag)
+            else:
+                line += sep + tag
+                line_width += font.measure(sep + tag)
+    output_lines.append(line)
+    print_output("\n".join(output_lines))
+
 
 config = read_user_config()
 # Parse last scanned date as datetime
@@ -135,10 +174,12 @@ for text, command in menu_items:
         height=1    # fixed height in text lines (adjust as needed)
     ).pack(pady=2)
 
+root.update()
 print_output("Current Config:")
-print_output(f"   - CSV: {config.get('csv_path', '[Not Set]')}")
-print_output(f"   - Song Tags: {config.get('song_tags', [])}")
-print_output(f"   - Website Tags: {config.get('web_tags', [])}")
-print_output(f"   - Last Scanned: {config.get('last_scanned_date', '[Not Set]')}")
+print_output(f"   - CSV:   {config.get('csv_path', '[Not Set]')}")
+print_tag_list("Song Tags", config.get('song_tags', []), text_output)
+print_tag_list("Website Tags", config.get('web_tags', []), text_output)
+print_output(f"   - Last Scanned:   {config.get('last_scanned_date', '[Not Set]').replace('T', ' Time ')}")
+
 
 root.mainloop()
