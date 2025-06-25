@@ -101,7 +101,7 @@ def menu_wrapper(target_fn):
 
 menu_items = [
     (" 1. Run Shazam Downloader ", lambda: threading.Thread(target=menu_wrapper(lambda: run_downloader(config, print_output, progress, root)), daemon=True).start()),
-    (" 2. Run MP3 Name Cleaner ", lambda: threading.Thread(target=menu_wrapper(lambda: run_cleaner(config, print_output)), daemon=True).start()),
+    (" 2. Clean & Tag MP3 Files ", lambda: threading.Thread(target=menu_wrapper(lambda: run_cleaner(config, print_output)), daemon=True).start()),
     (" 3. Set Music Folder ", menu_wrapper(lambda: update_and_show(root, text_output, config, "music_folder", "music folder", ask_path=True))),
     (" 4. Set CSV File Path ", menu_wrapper(lambda: update_and_show(root, text_output, config, "csv_path", "CSV path"))),
     (" 5. Edit Song Tags List ", menu_wrapper(lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True))),
@@ -127,9 +127,6 @@ for text, command in menu_items:
     btn.pack(pady=2)
     btn.bind("<Enter>", on_enter)
     btn.bind("<Leave>", on_leave)
-
-# Add a spacer below the menu buttons
-tk.Label(root, text="", bg="#242424").pack(pady=10)
 
 # --- Watermark in bottom right ---
 watermark_frame = tk.Frame(root, bg="#242424")
