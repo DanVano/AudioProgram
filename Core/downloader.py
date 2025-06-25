@@ -64,4 +64,57 @@ def download_youtube_audio(youtube_url, output_filename="downloaded.mp3"):
     return file_path
 
 def get_youtube_url_from_track(artist, title):
+    # Replace with real YouTube search logic as needed
     return "https://www.youtube.com/watch?v=uHDyFWS_WjQ"
+
+def run_downloader(config, print_output, progress, root):
+    from tag_cleaner import parse_shazam_csv
+    from datetime import datetime
+    print_output("\n[INFO] Running Shazam downloader...")
+
+    try:
+        entries = parse_shazam_csv(config["csv_path"])
+        if not entries:
+            print_output("[WARN] No valid entries found in CSV.")
+            return
+
+        progress["value"] = 0
+        progress["maximum"] = len(entries)
+
+        try:
+            last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
+        except ValueError:
+            last_scanned_date = datetime.min
+
+        count = 0
+        for entry in entries:
+            if entry['date'] <= last_scanned_date:
+                break
+            try:
+                yt_url = get_youtube_url_from_track(entry['artist'], entry['title'])
+                # Download with default output filename (may be overwritten if not unique)
+                output_name = "downloaded.mp3"
+                filepath = download_youtube_audio(yt_url, output_name)
+                print_output(f"[OK] Downloaded: {output_name}")
+                last_scanned_date = entry['date']
+                config["last_scanned_date"] = last_scanned_date.strftime("%Y-%m-%dT%H:%M:%S")
+                count += 1
+            except Exception as e:
+                print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
+
+            progress["value"] += 1
+            root.update_idletasks()
+
+        if count > 0:
+            from utils import save_user_config
+            save_user_config(config)
+            print_output(f"[INFO] {count} new tracks downloaded.")
+        else:
+            print_output("[INFO] No new tracks to download.")
+
+        progress["value"] = 0  # Reset after all done
+
+    except Exception as e:
+        print_output(f"[ERROR] Unexpected error: {e}")
+        messagebox = __import__('tkinter').messagebox
+        messagebox.showerror("Error", f"Something went wrong during download:\n{e}")
