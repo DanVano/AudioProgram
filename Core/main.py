@@ -1,54 +1,15 @@
 import threading
 import tkinter as tk
-import tkinter.font as tkfont
 from tkinter import messagebox, ttk
 from datetime import datetime
 
 from input_handler import update_and_show
-from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
-from downloader import download_youtube_audio, get_youtube_url_from_track
-from utils import read_user_config, save_user_config
+from tag_cleaner import run_cleaner, clean_filename, set_id3_tags, parse_shazam_csv
+from downloader import run_downloader, download_youtube_audio, get_youtube_url_from_track
+from utils import read_user_config, save_user_config, print_tag_list
 
-# Move to Utils after #
-
-def print_tag_list(label, taglist, text_widget, sep="   |   "):
-    bullet = "   - "
-    # Three spaces after the colon
-    first_line_prefix = f"{bullet}{label}:   "
-    tag_strs = [str(tag).strip("'") for tag in taglist]
-    font = tkfont.Font(font=text_widget.cget("font"))
-    widget_pixel_width = text_widget.winfo_width()
-    if widget_pixel_width == 1:
-        widget_pixel_width = font.measure(" " * int(text_widget.cget("width")))
-
-    hanging_indent = " " * len(first_line_prefix)
-    prefix_width = font.measure(first_line_prefix)
-    indent_width = font.measure(hanging_indent)
-
-    line = first_line_prefix
-    line_width = prefix_width
-    output_lines = []
-
-    for i, tag in enumerate(tag_strs):
-        addition = (sep if i > 0 else "") + tag
-        addition_width = font.measure(addition)
-        if line_width + addition_width > widget_pixel_width and line != first_line_prefix:
-            output_lines.append(line)
-            line = hanging_indent + tag
-            line_width = indent_width + font.measure(tag)
-        else:
-            if line == first_line_prefix:
-                line += tag
-                line_width += font.measure(tag)
-            else:
-                line += sep + tag
-                line_width += font.measure(sep + tag)
-    output_lines.append(line)
-    print_output("\n".join(output_lines))
-
-
+# --- Load config
 config = read_user_config()
-# Parse last scanned date as datetime
 try:
     last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
 except ValueError:
@@ -57,7 +18,7 @@ except ValueError:
 # === GUI Setup ===
 root = tk.Tk()
 root.title("Audio Program v8.0")
-root.configure(bg="#242424")  # Dark mode background
+root.configure(bg="#242424")
 
 header = tk.Label(
     root,
@@ -74,92 +35,82 @@ text_output = tk.Text(
     width=90,
     bg="#242424",
     fg="#F8F8F8",
-    insertbackground="#F8F8F8",     # White text cursor
+    insertbackground="#F8F8F8",
     highlightbackground="#333",
     highlightcolor="#444",
-    padx=16,    # Internal left/right padding (inside the text box)
-    pady=10,     # Internal top/bottom padding (inside the text box)
+    padx=16,
+    pady=10,
     font=("Segoe UI", 12)
 )
-text_output.pack(padx=16, pady=6)    # External padding (around the box)
+text_output.pack(padx=16, pady=6)
 
-progress = ttk.Progressbar(root, orient="horizontal", length=400, mode="determinate")
+# --- Tag configs ---
+text_output.tag_configure("bold", font=("Segoe UI", 12, "bold"))
+text_output.tag_configure("dotted", foreground="#AAAAAA", spacing1=7, spacing3=2)
+text_output.tag_configure("logtitle", font=("Segoe UI", 12, "bold"), spacing1=2)
+
+# --------- Custom Progress Bar Style ---------
+style = ttk.Style()
+style.theme_use('default')
+style.configure(
+    "Custom.Horizontal.TProgressbar",
+    troughcolor="#444444",   # Mid-grey trough
+    background="#d6d6d6",    # Light grey fill
+    bordercolor="#555555",
+    thickness=18
+)
+progress = ttk.Progressbar(
+    root,
+    orient="horizontal",
+    length=400,
+    mode="determinate",
+    style="Custom.Horizontal.TProgressbar"
+)
 progress.pack(pady=6)
 
 def print_output(msg):
     text_output.insert(tk.END, msg + "\n")
     text_output.see(tk.END)
 
-# ========== ACTIONS ==========
-
-def run_cleaner():
-    def task():
-        print_output("\n[INFO] Running cleaner...")
-        # Placeholder logic
-        print_output("[INFO] Cleaner run complete (simulation)")
-    threading.Thread(target=task, daemon=True).start()
-
-def run_downloader():
-    def task():
-        global last_scanned_date
-        print_output("\n[INFO] Running Shazam downloader...")
-
-        try:
-            entries = parse_shazam_csv(config["csv_path"])
-            if not entries:
-                print_output("[WARN] No valid entries found in CSV.")
-                return
-
-            progress["value"] = 0
-            progress["maximum"] = len(entries)
-
-            count = 0
-            for entry in entries:
-                if entry['date'] <= last_scanned_date:
-                    break
-                try:
-                    yt_url = get_youtube_url_from_track(entry['artist'], entry['title'])
-                    output_name = clean_filename(f"{entry['artist']} - {entry['title']}.mp3", config["song_tags"], config["web_tags"])
-                    filepath = download_youtube_audio(yt_url, output_name)
-                    set_id3_tags(filepath, entry['artist'], entry['title'])
-                    print_output(f"[OK] Downloaded: {output_name}")
-                    last_scanned_date = entry['date']
-                    config["last_scanned_date"] = last_scanned_date.strftime("%Y-%m-%dT%H:%M:%S")
-                    count += 1
-                except Exception as e:
-                    print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
-
-                progress["value"] += 1
-                root.update_idletasks()
-
-            if count > 0:
-                save_user_config(config)
-                print_output(f"[INFO] {count} new tracks downloaded.")
-            else:
-                print_output("[INFO] No new tracks to download.")
-
-            progress["value"] = 0  # Reset after all done
-
-        except Exception as e:
-            print_output(f"[ERROR] Unexpected error: {e}")
-            messagebox.showerror("Error", f"Something went wrong during download:\n{e}")
-
-    threading.Thread(target=task, daemon=True).start()
+def print_config_with_line():
+    text_output.delete(1.0, tk.END)
+    text_output.insert(tk.END, "Current Config:\n", "bold")
+    text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "CSV", "bold")
+    text_output.insert(tk.END, f":   {config.get('csv_path', '[Not Set]')}\n")
+    text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "Song Tags", "bold")
+    text_output.insert(tk.END, f":   {', '.join(config.get('song_tags', []))}\n")
+    text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "Website Tags", "bold")
+    text_output.insert(tk.END, f":   {', '.join(config.get('web_tags', []))}\n")
+    text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "Last Scanned", "bold")
+    text_output.insert(tk.END, f":   {config.get('last_scanned_date', '[Not Set]')}\n")
+    text_output.insert(tk.END, ". . " * 58 + "\n", "dotted")
+    text_output.insert(tk.END, "Operational Log:\n", "logtitle")
 
 # ========== MENU ==========
 
+def on_enter(event):
+    event.widget['bg'] = '#555555'  # Lighter grey on hover
+
+def on_leave(event):
+    event.widget['bg'] = '#333'     # Restore original
+
+def menu_wrapper(target_fn):
+    def wrapped(*args, **kwargs):
+        target_fn(*args, **kwargs)
+    return wrapped
+
 menu_items = [
-    (" 1. Run Shazam Downloader ", run_downloader),
-    (" 2. Run MP3 Name Cleaner ", run_cleaner),
-    (" 3. Set Music Folder ", lambda: update_and_show(root, text_output, config, "music_folder", "music folder", ask_path=True)),
-    (" 4. Set Shazam Song : List CSV Path ", lambda: update_and_show(root, text_output, config, "csv_path", "CSV path")),
-    (" 5. Add to Song Tags Removal List ", lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True)),
-    (" 6. Add to Web Tags Removal List ", lambda: update_and_show(root, text_output, config, "web_tags", "web tags", is_list=True)),
+    (" 1. Run Shazam Downloader ", lambda: threading.Thread(target=menu_wrapper(lambda: run_downloader(config, print_output, progress, root)), daemon=True).start()),
+    (" 2. Run MP3 Name Cleaner ", lambda: threading.Thread(target=menu_wrapper(lambda: run_cleaner(config, print_output)), daemon=True).start()),
+    (" 3. Set Music Folder ", menu_wrapper(lambda: update_and_show(root, text_output, config, "music_folder", "music folder", ask_path=True))),
+    (" 4. Set CSV File Path ", menu_wrapper(lambda: update_and_show(root, text_output, config, "csv_path", "CSV path"))),
+    (" 5. Edit Song Tags List ", menu_wrapper(lambda: update_and_show(root, text_output, config, "song_tags", "song tags", is_list=True))),
+    (" 6. Edit Web Tags List ", menu_wrapper(lambda: update_and_show(root, text_output, config, "web_tags", "web tags", is_list=True))),
     (" 7. Exit ", root.destroy)
 ]
 
 for text, command in menu_items:
-    tk.Button(
+    btn = tk.Button(
         root,
         text=text,
         command=command,
@@ -170,16 +121,42 @@ for text, command in menu_items:
         highlightbackground="#555",
         bd=0,
         font=("Segoe UI", 12),
-        width=32,   # fixed width in characters (adjust as needed)
-        height=1    # fixed height in text lines (adjust as needed)
-    ).pack(pady=2)
+        width=32,
+        height=1
+    )
+    btn.pack(pady=2)
+    btn.bind("<Enter>", on_enter)
+    btn.bind("<Leave>", on_leave)
+
+# Add a spacer below the menu buttons
+tk.Label(root, text="", bg="#242424").pack(pady=10)
+
+# --- Watermark in bottom right ---
+watermark_frame = tk.Frame(root, bg="#242424")
+watermark_frame.pack(side="bottom", fill="x", anchor="se")
+watermark = tk.Label(
+    watermark_frame,
+    text="v8.0   © 2025",
+    bg="#242424",
+    fg="#888888",
+    font=("Segoe UI", 10, "italic"),
+    anchor="e",
+    justify="right"
+)
+watermark.pack(side="right", padx=12, pady=4)
+
+def center_window(win):
+    win.update_idletasks()
+    w = win.winfo_width()
+    h = win.winfo_height()
+    screen_w = win.winfo_screenwidth()
+    screen_h = win.winfo_screenheight()
+    x = (screen_w // 2) - (w // 2)
+    y = (screen_h // 2) - (h // 2)
+    win.geometry(f'{w}x{h}+{x}+{y}')
+
+center_window(root)
 
 root.update()
-print_output("Current Config:")
-print_output(f"   - CSV:   {config.get('csv_path', '[Not Set]')}")
-print_tag_list("Song Tags", config.get('song_tags', []), text_output)
-print_tag_list("Website Tags", config.get('web_tags', []), text_output)
-print_output(f"   - Last Scanned:   {config.get('last_scanned_date', '[Not Set]').replace('T', ' Time ')}")
-
-
+print_config_with_line()
 root.mainloop()
