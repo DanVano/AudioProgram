@@ -4,7 +4,7 @@
 ---
 
 ## Status
-**Final release** (minor bug fixes only)  
+**Final release** (minor bug fixes only)  API may change breaking the downloader
 **Python Version:** 3.8+
 
 ---
