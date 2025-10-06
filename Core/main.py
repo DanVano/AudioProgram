@@ -14,7 +14,7 @@ try:
     DOWNLOADER_MSG = "Downloader: Ready"
 except RuntimeError as e:
     DOWNLOADER_AVAILABLE = False
-    DOWNLOADER_MSG = f"Downloader: Disabled. No API Key — {e}"
+    DOWNLOADER_MSG = f"Downloader: Disabled — {e}"
     
 ##print_tag_list
 
