@@ -98,7 +98,7 @@ def print_config_with_line():
     text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "Last Scanned", "bold")
     text_output.insert(tk.END, f":   {config.get('last_scanned_date', '[Not Set]')}\n")
     text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "Downloader Status", "bold")
-    text_output.insert(tk.END, f":   {DOWNLOADER_MSG}\n")
+    text_output.insert(tk.END, f":   {DOWNLOADER_MSG}\n", "bold")
     text_output.insert(tk.END, ". . " * 58 + "\n", "dotted")
     text_output.insert(tk.END, "Operational Log:\n", "logtitle")
 
