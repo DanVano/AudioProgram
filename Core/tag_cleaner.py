@@ -23,7 +23,7 @@ def clean_filename(filename, song_tags, web_tags):
             name = re.sub(re.escape(t), "", name, flags=re.IGNORECASE)
 
     # 3) Strip bracketed junk like [Lyrics], (Official Audio), etc.
-    bracket_tokens = r"(official|lyrics?|lyric\s*video|visualizer|audio|video|mv|hq|hd|music\s*video|remix|radio\s*edit|extended\s*mix)"
+    bracket_tokens = r"(official|lyrics?|lyric\s*video|visualizer|audio|video|mv|hq|hd|music\s*video|radio\s*edit|extended\s*mix)"
     name = re.sub(rf"\[\s*{bracket_tokens}\s*\]", "", name, flags=re.IGNORECASE)
     name = re.sub(rf"\(\s*{bracket_tokens}\s*\)", "", name, flags=re.IGNORECASE)
 
@@ -41,7 +41,6 @@ def clean_filename(filename, song_tags, web_tags):
         r"\bhd\b",
         r"\bmv\b",
         r"\b320\s*kbps\b",
-        r"\bremix\b",
         r"\bradio\s*edit\b",
         r"\bextended\s*mix\b",
     ])
