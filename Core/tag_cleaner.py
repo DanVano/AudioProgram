@@ -1,24 +1,63 @@
-import os
+import eyed3, os, re
+
 from datetime import datetime
 
-import eyed3
 
-from core.utils import read_user_config
-
+def _strip_tokens(text, patterns):
+    for pat in patterns:
+        text = re.sub(pat, "", text, flags=re.IGNORECASE)
+    return text
 
 def clean_filename(filename, song_tags, web_tags):
-    for tag in song_tags + web_tags:
-        filename = filename.replace(tag, "")
-    filename = filename.strip().strip("-").strip()
-    if not filename.endswith(".mp3"):
-        filename += ".mp3"
-    return filename
+    name, ext = os.path.splitext(filename)
+    if not ext:
+        ext = ".mp3"
+
+    # 1) Normalize a bit
+    name = name.replace("_", " ")
+
+    # 2) Remove user-config tags first (exact text, case-insensitive)
+    for tag in (song_tags or []) + (web_tags or []):
+        t = tag.strip()
+        if t:
+            name = re.sub(re.escape(t), "", name, flags=re.IGNORECASE)
+
+    # 3) Strip bracketed junk like [Lyrics], (Official Audio), etc.
+    bracket_tokens = r"(official|lyrics?|lyric\s*video|visualizer|audio|video|mv|hq|hd|music\s*video|remix|radio\s*edit|extended\s*mix)"
+    name = re.sub(rf"\[\s*{bracket_tokens}\s*\]", "", name, flags=re.IGNORECASE)
+    name = re.sub(rf"\(\s*{bracket_tokens}\s*\)", "", name, flags=re.IGNORECASE)
+
+    # 4) Remove common descriptors even when unbracketed
+    #    (covers single words AND combos like "Official Lyric Visualizer")
+    name = _strip_tokens(name, [
+        r"\bofficial(?:\s+music\s+video)?\b",
+        r"\blyrics?\b",
+        r"\blyric\s*video\b",
+        r"\bvisualizer\b",
+        r"\baudio(?:\s+only)?\b",
+        r"\bmusic\s*video\b",
+        r"\bvideo\b",
+        r"\bhq\b",
+        r"\bhd\b",
+        r"\bmv\b",
+        r"\b320\s*kbps\b",
+        r"\bremix\b",
+        r"\bradio\s*edit\b",
+        r"\bextended\s*mix\b",
+    ])
+
+    # 5) Tidy separators/spaces/double dashes
+    name = re.sub(r"\s*-\s*", " - ", name)     # normalize dashes
+    name = re.sub(r"\s{2,}", " ", name).strip()
+    name = re.sub(r"^-\s*|\s*-$", "", name)    # strip leading/trailing dash
+
+    return f"{name}{ext}"
 
 def set_id3_tags(filepath, artist, title):
     audio = eyed3.load(filepath)
     if audio is None:
         print(f"Warning: Could not load file: {filepath}. ID3 tags not set.")
-        return
+        return False
     if audio.tag is None:
         audio.initTag()
     audio.tag.artist = artist
@@ -26,10 +65,12 @@ def set_id3_tags(filepath, artist, title):
     audio.tag.title = title
     try:
         audio.tag.save()
+        return True
     except PermissionError:
         print(f"Permission denied: {filepath} is read-only.")
     except Exception as e:
         print(f"Error saving ID3 tags to {filepath}: {e}")
+    return False
 
 def parse_shazam_csv(file_path):
     import csv
@@ -54,3 +95,83 @@ def parse_shazam_csv(file_path):
     except Exception as e:
         print(f"Error reading CSV: {e}")
     return result
+
+def run_cleaner(config, print_output):
+    """
+    Cleans MP3 filenames in the configured music_folder and sets basic ID3 tags.
+    Log format (no colors):
+      1] <original filename>
+           [Already Clean]
+           [Tags Set]
+      2] <original filename>
+           [Cleaned]: <new filename>.mp3
+           [Tags Set]
+      ...
+      [INFO] Cleaned Filenames X | Skipped Filenames Y | Tagged Title/Artist Z | Errors N
+    """
+    music_folder = config.get("music_folder")
+    if not music_folder or not os.path.isdir(music_folder):
+        print_output(f"[INFO] Music folder not found: {music_folder or '[Not Set]'}")
+        return
+
+    files = [f for f in os.listdir(music_folder) if f.lower().endswith(".mp3")]
+    files.sort(key=str.lower)
+
+    cleaned = 0
+    skipped = 0
+    tagged = 0
+    errors = 0
+
+    print_output("[INFO] Running MP3 filename cleaner")
+
+    for idx, filename in enumerate(files, start=1):
+        try:
+            source_path = os.path.join(music_folder, filename)
+            print_output(f"{idx}] {filename}")
+
+            # Build cleaned filename using user-config tags
+            cleaned_name = clean_filename(
+                filename,
+                config.get("song_tags", []),
+                config.get("web_tags", [])
+            )
+            target_path = os.path.join(music_folder, cleaned_name)
+
+            # Rename if needed (ensure uniqueness)
+            if cleaned_name != filename:
+                base, ext = os.path.splitext(cleaned_name)
+                candidate = cleaned_name
+                n = 2
+                while os.path.exists(target_path):
+                    candidate = f"{base} ({n}){ext}"
+                    target_path = os.path.join(music_folder, candidate)
+                    n += 1
+                os.rename(source_path, target_path)
+                print_output(f"     [Cleaned]: {os.path.basename(target_path)}")
+                cleaned += 1
+            else:
+                print_output("     [Already Clean]")
+                target_path = source_path
+                skipped += 1
+
+            # Set ID3 tags when we can parse "Artist - Title"
+            base_no_ext = os.path.splitext(os.path.basename(target_path))[0]
+            if " - " in base_no_ext:
+                artist, title = base_no_ext.split(" - ", 1)
+                if set_id3_tags(target_path, artist.strip(), title.strip()):
+                    print_output("     [Tags Set]")
+                    tagged += 1
+                else:
+                    print_output("     [Tags Skipped]")
+
+        except Exception as e:
+            errors += 1
+            print_output(f"     [ERROR]: {e}")
+
+    # Final summary line
+    print_output(
+        f"[INFO] Cleaned Filenames {cleaned} | "
+        f"Skipped Filenames {skipped} | "
+        f"Tagged Title/Artist {tagged} | "
+        f"Errors {errors}"
+    )

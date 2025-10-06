@@ -1,7 +1,7 @@
 import os
 
 
-user_config_path = user_config_path = os.path.join("Config", "user_config.txt")
+user_config_path = "user_config.txt"
 
 def read_user_config():
     config = {
@@ -11,10 +11,12 @@ def read_user_config():
             " (Lyric Video)", " (Audio)", " (Official Audio)", " (Official Music Video)",
             " (Lyrics)", " (Official Video)", " (Audio Only)", " (Official Lyric Video)",
             " Official Video", " (320 kbps)", " (320kbps)", " Official Lyric Video",
-            " (getmp3.pro)", " [Lyrics]", " (Visualizer)"
+            " (getmp3.pro)", " [Lyrics]", " (Visualizer)", " Lyrics", " Official Lyric Visualizer",
+            " Official Audio", " (Official)", " (HQ)", " (HD)", " (Full Album)", " (Album Version)",
+            " (Album)", " (Video)", " (with Lyrics)", " official audio"
         ],
         "web_tags": ["[ytmp3.page] ", "yt5s.io - ", "[YT2mp3.info] - "],
-        "last_scanned_date": "2025-03-10"
+        "last_scanned_date": "2025-03-10T00:00:00"
     }
 
     if os.path.exists(user_config_path):
