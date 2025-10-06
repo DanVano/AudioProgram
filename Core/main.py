@@ -1,3 +1,4 @@
+import logging
 import threading
 import tkinter as tk
 
@@ -16,7 +17,10 @@ except RuntimeError as e:
     DOWNLOADER_AVAILABLE = False
     DOWNLOADER_MSG = f"Downloader: Disabled — {e}"
     
-##print_tag_list
+# Remove external mutagen error
+logging.getLogger("mutagen").setLevel(logging.ERROR)  
+ 
+# print_tag_list
 
 # --- Load config
 config = read_user_config()

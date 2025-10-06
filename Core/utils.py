@@ -13,7 +13,7 @@ def read_user_config():
             " Official Video", " (320 kbps)", " (320kbps)", " Official Lyric Video",
             " (getmp3.pro)", " [Lyrics]", " (Visualizer)", " Lyrics", " Official Lyric Visualizer",
             " Official Audio", " (Official)", " (HQ)", " (HD)", " (Full Album)", " (Album Version)",
-            " (Album)", " (Video)", " (with Lyrics)", " official audio"
+            " (Album)", " (Video)", " (with Lyrics)", " official audio", "tiktok", " tik", "tok"
         ],
         "web_tags": ["[ytmp3.page] ", "yt5s.io - ", "[YT2mp3.info] - "],
         "last_scanned_date": "2025-03-10T00:00:00"

@@ -120,6 +120,7 @@ def run_cleaner(config, print_output):
     skipped = 0
     tagged = 0
     errors = 0
+    warning = 0
 
     print_output("[INFO] Running MP3 filename cleaner")
 
@@ -165,12 +166,15 @@ def run_cleaner(config, print_output):
 
         except Exception as e:
             errors += 1
+            warning += 1
             print_output(f"     [ERROR]: {e}")
+            continue
 
     # Final summary line
     print_output(
         f"[INFO] Cleaned Filenames {cleaned} | "
         f"Skipped Filenames {skipped} | "
         f"Tagged Title/Artist {tagged} | "
-        f"Errors {errors}"
+        f"Errors {errors} | "
+        f"Warnings {warning}"
     )
