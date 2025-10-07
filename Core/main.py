@@ -43,8 +43,12 @@ header = tk.Label(
 )
 header.pack(pady=(12, 6))
 
+# --- Output area with vertical scrollbar ---
+out_frame = tk.Frame(root, bg="#242424")
+out_frame.pack(fill="both", expand=True, padx=16, pady=6)
+
 text_output = tk.Text(
-    root,
+    out_frame,
     height=20,
     width=90,
     bg="#242424",
@@ -54,9 +58,16 @@ text_output = tk.Text(
     highlightcolor="#444",
     padx=16,
     pady=10,
-    font=("Segoe UI", 12)
+    font=("Segoe UI", 12),
+    wrap="word"   # change to "none" if you later add a horizontal scrollbar
 )
-text_output.pack(padx=16, pady=6)
+text_output.pack(side="left", fill="both", expand=True)
+
+y_scroll = tk.Scrollbar(out_frame, orient="vertical", command=text_output.yview)
+y_scroll.pack(side="right", fill="y")
+
+text_output.configure(yscrollcommand=y_scroll.set)
+# --- end output area ---
 
 # --- Tag configs ---
 text_output.tag_configure("bold", font=("Segoe UI", 12, "bold"))
@@ -84,8 +95,35 @@ progress.pack(pady=6)
 
 def print_output(msg):
     def _append():
+        # Special styling for the final summary line
+        if msg.startswith("[INFO] Cleaned Filenames"):
+            # Example msg:
+            # "[INFO] Cleaned Filenames 113 | Skipped Filenames 104 | Tagged Title/Artist 135 | Errors 0 | Unable to load mp3 7"
+            text_output.insert(tk.END, "[INFO] ", "bold")
+
+            body = msg[len("[INFO] "):]
+            parts = [p.strip() for p in body.split("|")]
+
+            for i, part in enumerate(parts):
+                # split on the LAST space: "Label words ... value"
+                if " " in part:
+                    label, value = part.rsplit(" ", 1)
+                else:
+                    label, value = part, ""
+
+                text_output.insert(tk.END, f"{label}: ", "bold")  # label bold + colon
+                text_output.insert(tk.END, value)                 # value normal
+                if i < len(parts) - 1:
+                    text_output.insert(tk.END, " | ")
+
+            text_output.insert(tk.END, "\n")
+            text_output.see(tk.END)
+            return
+
+        # Default behavior for all other lines
         text_output.insert(tk.END, msg + "\n")
         text_output.see(tk.END)
+
     root.after(0, _append)
 
 def print_config_with_line():
