@@ -210,8 +210,8 @@ def run_cleaner(config, print_output):
     # Final summary line (renamed warning bucket)
     print_output(
         f"[INFO] Cleaned Filenames {cleaned} | "
-        f"Skipped Filenames {skipped} | "
-        f"Tagged Title/Artist {tagged} | "
-        f"Errors {errors} | "
-        f"Unable to load mp3 {unable_to_load}"
+        f"Filenames were Clean {skipped} | "
+        f"Completed Title/Artist Tags{tagged} | "
+        f"Unable to load MP3 tags {unable_to_load} | "
+        f"Errors {errors}"
     )
