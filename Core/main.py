@@ -1,4 +1,5 @@
 import logging
+import re
 import threading
 import tkinter as tk
 
@@ -50,7 +51,7 @@ out_frame.pack(fill="both", expand=True, padx=16, pady=6)
 text_output = tk.Text(
     out_frame,
     height=20,
-    width=90,
+    width=110,
     bg="#242424",
     fg="#F8F8F8",
     insertbackground="#F8F8F8",
@@ -93,37 +94,35 @@ progress = ttk.Progressbar(
 )
 progress.pack(pady=6)
 
-def print_output(msg):
+SUMMARY_RE = re.compile(r'^\[INFO\]\s*.+\d(?:\s\|\s.+\d)+$')
+
+def print_output(msg: str):
     def _append():
-        # Special styling for the final summary line
-        if msg.startswith("[INFO] Cleaned Filenames"):
-            # Example msg:
-            # "[INFO] Cleaned Filenames 113 | Skipped Filenames 104 | Tagged Title/Artist 135 | Errors 0 | Unable to load mp3 7"
+        text_output.configure(state="normal")
+
+        if SUMMARY_RE.match(msg):
+            # Write the [INFO] prefix in bold
             text_output.insert(tk.END, "[INFO] ", "bold")
 
-            body = msg[len("[INFO] "):]
+            # Everything after "[INFO] "
+            body = msg.split("] ", 1)[1] if "] " in msg else msg[7:]
             parts = [p.strip() for p in body.split("|")]
 
             for i, part in enumerate(parts):
-                # split on the LAST space: "Label words ... value"
-                if " " in part:
-                    label, value = part.rsplit(" ", 1)
-                else:
-                    label, value = part, ""
-
+                # split on the LAST space -> "Label words ... value"
+                label, value = (part.rsplit(" ", 1) if " " in part else (part, ""))
                 text_output.insert(tk.END, f"{label}: ", "bold")  # label bold + colon
                 text_output.insert(tk.END, value)                 # value normal
                 if i < len(parts) - 1:
                     text_output.insert(tk.END, " | ")
-
             text_output.insert(tk.END, "\n")
-            text_output.see(tk.END)
-            return
+        else:
+            text_output.insert(tk.END, msg + "\n")
 
-        # Default behavior for all other lines
-        text_output.insert(tk.END, msg + "\n")
         text_output.see(tk.END)
+        text_output.configure(state="disabled")
 
+    # keep UI responsive
     root.after(0, _append)
 
 def print_config_with_line():
@@ -141,7 +140,7 @@ def print_config_with_line():
     text_output.insert(tk.END, f":   {config.get('last_scanned_date', '[Not Set]')}\n")
     text_output.insert(tk.END, "   - "); text_output.insert(tk.END, "Downloader Status", "bold")
     text_output.insert(tk.END, f":   {DOWNLOADER_MSG}\n", "bold")
-    text_output.insert(tk.END, ". . " * 58 + "\n", "dotted")
+    text_output.insert(tk.END, ". . " * 70 + "\n", "dotted")
     text_output.insert(tk.END, "Operational Log:\n", "logtitle")
 
 # ========== MENU ==========
