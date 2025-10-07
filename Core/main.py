@@ -100,18 +100,23 @@ def print_output(msg: str):
     def _append():
         text_output.configure(state="normal")
 
-        if SUMMARY_RE.match(msg):
-            # Write the [INFO] prefix in bold
+        # Count and print any leading newlines (from tag_cleaner)
+        leading_newlines = len(msg) - len(msg.lstrip('\n'))
+        if leading_newlines:
+            text_output.insert(tk.END, "\n" * leading_newlines)
+
+        stripped = msg.lstrip()  # remove leading spaces/newlines for matching
+        if SUMMARY_RE.match(stripped):
+            # Bold "[INFO] "
             text_output.insert(tk.END, "[INFO] ", "bold")
 
             # Everything after "[INFO] "
-            body = msg.split("] ", 1)[1] if "] " in msg else msg[7:]
+            body = stripped.split("] ", 1)[1] if "] " in stripped else stripped[7:]
             parts = [p.strip() for p in body.split("|")]
 
             for i, part in enumerate(parts):
-                # split on the LAST space -> "Label words ... value"
                 label, value = (part.rsplit(" ", 1) if " " in part else (part, ""))
-                text_output.insert(tk.END, f"{label}: ", "bold")  # label bold + colon
+                text_output.insert(tk.END, f"{label}: ", "bold")  # bold label + colon
                 text_output.insert(tk.END, value)                 # value normal
                 if i < len(parts) - 1:
                     text_output.insert(tk.END, " | ")
@@ -122,7 +127,6 @@ def print_output(msg: str):
         text_output.see(tk.END)
         text_output.configure(state="disabled")
 
-    # keep UI responsive
     root.after(0, _append)
 
 def print_config_with_line():
