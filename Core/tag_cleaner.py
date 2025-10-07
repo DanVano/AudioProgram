@@ -53,23 +53,31 @@ def clean_filename(filename, song_tags, web_tags):
     return f"{name}{ext}"
 
 def set_id3_tags(filepath, artist, title):
+    """
+    Returns one of: "ok", "unable", "error"
+      ok      -> tags written
+      unable  -> mp3 couldn't be loaded by eyeD3
+      error   -> exception while saving tags (permission/other)
+    """
     audio = eyed3.load(filepath)
     if audio is None:
         print(f"Warning: Could not load file: {filepath}. ID3 tags not set.")
-        return False
+        return "unable"
+
     if audio.tag is None:
         audio.initTag()
+
     audio.tag.artist = artist
     audio.tag.album_artist = artist
     audio.tag.title = title
     try:
         audio.tag.save()
-        return True
+        return "ok"
     except PermissionError:
         print(f"Permission denied: {filepath} is read-only.")
     except Exception as e:
         print(f"Error saving ID3 tags to {filepath}: {e}")
-    return False
+    return "error"
 
 def parse_shazam_csv(file_path):
     import csv
@@ -98,16 +106,10 @@ def parse_shazam_csv(file_path):
 def run_cleaner(config, print_output):
     """
     Cleans MP3 filenames in the configured music_folder and sets basic ID3 tags.
-    Log format (no colors):
-      1] <original filename>
-           [Already Clean]
-           [Tags Set]
-      2] <original filename>
-           [Cleaned]: <new filename>.mp3
-           [Tags Set]
-      ...
-      [INFO] Cleaned Filenames X | Skipped Filenames Y | Tagged Title/Artist Z | Errors N
+    Final line now shows:
+      [INFO] ... | Errors X | Unable to load mp3 Y
     """
+    import logging
     music_folder = config.get("music_folder")
     if not music_folder or not os.path.isdir(music_folder):
         print_output(f"[INFO] Music folder not found: {music_folder or '[Not Set]'}")
@@ -119,62 +121,97 @@ def run_cleaner(config, print_output):
     cleaned = 0
     skipped = 0
     tagged = 0
-    errors = 0
-    warning = 0
+
+    # New counters
+    errors = 0                 # program/logic errors + mutagen warnings we treat as errors
+    unable_to_load = 0         # "Warning: Could not load file: ..." cases
 
     print_output("[INFO] Running MP3 filename cleaner")
 
-    for idx, filename in enumerate(files, start=1):
-        try:
-            source_path = os.path.join(music_folder, filename)
-            print_output(f"{idx}] {filename}")
+    # --- Capture mutagen warnings like "LAME tag CRC check failed" as Errors ---
+    mut_logger = logging.getLogger("mutagen")
+    _prev_level = mut_logger.level
+    _prev_propagate = getattr(mut_logger, "propagate", True)
 
-            # Build cleaned filename using user-config tags
-            cleaned_name = clean_filename(
-                filename,
-                config.get("song_tags", []),
-                config.get("web_tags", [])
-            )
-            target_path = os.path.join(music_folder, cleaned_name)
+    class _MutagenCounter(logging.Handler):
+        def __init__(self):
+            super().__init__(level=logging.WARNING)
+            self.count = 0
+        def emit(self, record):
+            msg = record.getMessage().lower()
+            # Count classic bad-mp3 messages + any mutagen ERRORs
+            if "lame tag crc check failed" in msg or record.levelno >= logging.ERROR:
+                self.count += 1
 
-            # Rename if needed (ensure uniqueness)
-            if cleaned_name != filename:
-                base, ext = os.path.splitext(cleaned_name)
-                candidate = cleaned_name
-                n = 2
-                while os.path.exists(target_path):
-                    candidate = f"{base} ({n}){ext}"
-                    target_path = os.path.join(music_folder, candidate)
-                    n += 1
-                os.rename(source_path, target_path)
-                print_output(f"     [Cleaned]: {os.path.basename(target_path)}")
-                cleaned += 1
-            else:
-                print_output("     [Already Clean]")
-                target_path = source_path
-                skipped += 1
+    _h = _MutagenCounter()
+    mut_logger.addHandler(_h)
+    # ensure warnings are emitted while we run (even if main.py changed the level)
+    mut_logger.setLevel(logging.WARNING)
+    # keep console quiet or noisy — your choice. We leave default propagate as-is.
+    try:
+        for idx, filename in enumerate(files, start=1):
+            try:
+                source_path = os.path.join(music_folder, filename)
+                print_output(f"{idx}] {filename}")
 
-            # Set ID3 tags when we can parse "Artist - Title"
-            base_no_ext = os.path.splitext(os.path.basename(target_path))[0]
-            if " - " in base_no_ext:
-                artist, title = base_no_ext.split(" - ", 1)
-                if set_id3_tags(target_path, artist.strip(), title.strip()):
-                    print_output("     [Tags Set]")
-                    tagged += 1
+                # Build cleaned filename using user-config tags
+                cleaned_name = clean_filename(
+                    filename,
+                    config.get("song_tags", []),
+                    config.get("web_tags", [])
+                )
+                target_path = os.path.join(music_folder, cleaned_name)
+
+                # Rename if needed (ensure uniqueness)
+                if cleaned_name != filename:
+                    base, ext = os.path.splitext(cleaned_name)
+                    candidate = cleaned_name
+                    n = 2
+                    while os.path.exists(target_path):
+                        candidate = f"{base} ({n}){ext}"
+                        target_path = os.path.join(music_folder, candidate)
+                        n += 1
+                    os.rename(source_path, target_path)
+                    print_output(f"     [Cleaned]: {os.path.basename(target_path)}")
+                    cleaned += 1
+                else:
+                    print_output("     [Already Clean]")
+                    target_path = source_path
+                    skipped += 1
+
+                # Set ID3 tags when we can parse "Artist - Title"
+                base_no_ext = os.path.splitext(os.path.basename(target_path))[0]
+                if " - " in base_no_ext:
+                    artist, title = base_no_ext.split(" - ", 1)
+                    status = set_id3_tags(target_path, artist.strip(), title.strip())
+                    if status == "ok":
+                        print_output("     [Tags Set]")
+                        tagged += 1
+                    elif status == "unable":
+                        print_output("     [Tags Skipped]")
+                        unable_to_load += 1
+                    else:  # "error"
+                        print_output("     [Tags Skipped]")
+                        errors += 1
                 else:
                     print_output("     [Tags Skipped]")
 
-        except Exception as e:
-            errors += 1
-            warning += 1
-            print_output(f"     [ERROR]: {e}")
-            continue
+            except Exception as e:
+                errors += 1
+                print_output(f"     [ERROR]: {e}")
+                continue
+    finally:
+        # fold any mutagen warnings we caught into the Errors count
+        errors += getattr(_h, "count", 0)
+        mut_logger.removeHandler(_h)
+        mut_logger.setLevel(_prev_level)
+        mut_logger.propagate = _prev_propagate
 
-    # Final summary line
+    # Final summary line (renamed warning bucket)
     print_output(
         f"[INFO] Cleaned Filenames {cleaned} | "
         f"Skipped Filenames {skipped} | "
         f"Tagged Title/Artist {tagged} | "
         f"Errors {errors} | "
-        f"Warnings {warning}"
+        f"Unable to load mp3 {unable_to_load}"
     )
