@@ -43,6 +43,7 @@ def clean_filename(filename, song_tags, web_tags):
         r"\b320\s*kbps\b",
         r"\bradio\s*edit\b",
         r"\bextended\s*mix\b",
+        r"[\[\]\{\}]",
     ])
 
     # 5) Tidy separators/spaces/double dashes

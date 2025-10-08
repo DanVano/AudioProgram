@@ -1,5 +1,5 @@
 music_folder=C:/Users/skftw/Desktop/Music_backup/Music
 csv_path=C:/Desktop/Music/shazam_library.csv
 song_tags= (Lyric Video)| (Audio)| (Official Audio)| (Official Music Video)| (Lyrics)| (Official Video)| (Audio Only)| (Official Lyric Video)| Official Video| (320 kbps)| (320kbps)| Official Lyric Video| (getmp3.pro)| [Lyrics]| (Visualizer)| Lyrics| Official Lyric Visualizer| Official Audio| (Official)| (HQ)| (HD)| (Full Album)| (Album Version)| (Album)| (Video)| (with Lyrics)| official audio|tiktok| tik|tok
-web_tags=[ytmp3.page] |yt5s.io - |[YT2mp3.info] - 
+web_tags=[ytmp3.page] |yt5s.io - |[YT2mp3.info] - | 
 last_scanned_date=2025-03-10T00:00:00
