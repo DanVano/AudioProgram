@@ -7,15 +7,6 @@ from utils import read_user_config, save_user_config
 config = read_user_config()
 rapidapi_key = config.get("rapidapi_key", "")
 if not rapidapi_key:
-    try:
-        import tkinter as tk
-        from tkinter import messagebox
-        root = tk.Tk()
-        root.withdraw()
-        messagebox.showerror("Configuration Error", "Missing RapidAPI key in user_config.txt.\n\nPlease add your key and restart the program.")
-        root.destroy()
-    except Exception:
-        pass
     raise RuntimeError("Missing RapidAPI key in user_config.txt")
 
 def download_youtube_audio(youtube_url, output_filename="downloaded.mp3"):
@@ -132,5 +123,3 @@ def run_downloader(config, print_output, progress, root):
 
     except Exception as e:
         print_output(f"[ERROR] Unexpected error: {e}")
-        messagebox = __import__('tkinter').messagebox
-        messagebox.showerror("Error", f"Something went wrong during download:\n{e}")
