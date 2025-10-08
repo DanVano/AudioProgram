@@ -1,18 +1,17 @@
-import logging
+import logging, pathlib, sys, traceback
 import tkinter as tk
 
 from input_handler import update_and_show
 from tag_cleaner import run_cleaner
 from utils import read_user_config
 
-from ui import (
-    build_output_area,
-    build_progressbar,
-    make_print_output,
-    add_hover,
-    center_window,
-    run_in_thread,
-)
+from ui import (build_output_area, build_progressbar, make_print_output, add_hover, center_window, run_in_thread,)
+
+def excepthook(exc_type, exc, tb):
+    log = pathlib.Path.home() / "AudioProgram_error.log"
+    with log.open("a", encoding="utf-8") as f:
+        traceback.print_exception(exc_type, exc, tb, file=f)
+sys.excepthook = excepthook
 
 # Safe importer: keep UI running without a key
 try:
