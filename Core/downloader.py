@@ -55,7 +55,7 @@ def download_youtube_audio(youtube_url, output_filename="downloaded.mp3"):
 
     return file_path
 
-def get_youtube_url_from_track(artist, title):
+def _get_youtube_url_from_track(artist, title):
     # Replace with real YouTube search logic as needed
     return "https://www.youtube.com/watch?v=uHDyFWS_WjQ"
 
@@ -84,7 +84,7 @@ def run_downloader(config, print_output, progress, root):
             if entry['date'] <= last_scanned_date:
                 break
             try:
-                yt_url = get_youtube_url_from_track(entry['artist'], entry['title'])
+                yt_url = _get_youtube_url_from_track(entry['artist'], entry['title'])
 
                 # build a target name like "Artist - Title.mp3" and clean it
                 raw_name = f"{entry['artist']} - {entry['title']}.mp3"

@@ -18,6 +18,6 @@ pip install -r requirements.txt
 
 :: Run the program
 echo Launching AudioProgram...
-python audio_program/main.py
+python core/main.py
 
 pause

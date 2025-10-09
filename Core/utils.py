@@ -1,7 +1,7 @@
 import os
 
 
-user_config_path = "user_config.txt"
+_USER_CONFIG_PATH = "user_config.txt"
 
 def read_user_config():
     config = {
@@ -19,9 +19,9 @@ def read_user_config():
         "last_scanned_date": "2025-03-10T00:00:00"
     }
 
-    if os.path.exists(user_config_path):
+    if os.path.exists(_USER_CONFIG_PATH):
         try:
-            with open(user_config_path, "r", encoding="utf-8") as f:
+            with open(_USER_CONFIG_PATH, "r", encoding="utf-8") as f:
                 for line in f:
                     if '=' in line:
                         key, val = line.strip().split("=", 1)
@@ -35,7 +35,7 @@ def read_user_config():
     return config
 
 def save_user_config(config):
-    with open(user_config_path, "w", encoding="utf-8") as f:
+    with open(_USER_CONFIG_PATH, "w", encoding="utf-8") as f:
         for key, val in config.items():
             if isinstance(val, list):
                 val = "|".join(val)

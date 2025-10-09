@@ -1,4 +1,4 @@
 @echo off
 cd ..
-python audio_program/main.py
+python Core/main.py
 pause

@@ -4,7 +4,7 @@ from tkinter import ttk
 import threading
 
 # Detect your final summary lines so labels can be bolded with colons.
-SUMMARY_RE = re.compile(r'^\[INFO\]\s*.+\d(?:\s\|\s.+\d)+$')
+_SUMMARY_RE = re.compile(r'^\[INFO\]\s*.+\d(?:\s\|\s.+\d)+$')
 
 def build_output_area(root: tk.Tk) -> tk.Text:
     """Create the output Text area with the same look/feel as before."""
@@ -49,7 +49,7 @@ def make_print_output(root: tk.Tk, text_output: tk.Text):
                 text_output.insert(tk.END, "\n" * leading_newlines)
 
             stripped = msg.lstrip()
-            if SUMMARY_RE.match(stripped):
+            if _SUMMARY_RE.match(stripped):
                 # Bold the [INFO] prefix
                 text_output.insert(tk.END, "[INFO] ", "bold")
 

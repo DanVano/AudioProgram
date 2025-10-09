@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "Config"
+		},
+		{
+			"path": "Core"
+		},
+		{
+			"path": "legacy_code"
+		},
+		{
+			"path": "Setup_Scripts"
+		}
+	]
+}
