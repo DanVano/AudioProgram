@@ -1,7 +1,8 @@
 import re
 import tkinter as tk
-from tkinter import ttk
+
 import threading
+from tkinter import ttk
 
 # Detect your final summary lines so labels can be bolded with colons.
 _SUMMARY_RE = re.compile(r'^\[INFO\]\s*.+\d(?:\s\|\s.+\d)+$')
