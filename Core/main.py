@@ -79,17 +79,34 @@ def print_config_with_line():
     text_output.configure(state="disabled")
 
 # ── Actions ───────────────────────────────────────────────────────────────────
+_action_buttons: list = []
+
+def _set_buttons_enabled(enabled: bool):
+    state = "normal" if enabled else "disabled"
+    for btn in _action_buttons:
+        btn.configure(state=state)
+
+def run_task(fn, *args, **kwargs):
+    """Disable action buttons, run fn in a daemon thread, re-enable when done."""
+    _set_buttons_enabled(False)
+    def _wrapper():
+        try:
+            fn(*args, **kwargs)
+        finally:
+            root.after(0, lambda: _set_buttons_enabled(True))
+    run_in_thread(_wrapper)
+
 def start_downloader():
     if not DOWNLOADER_AVAILABLE:
         print_output("Downloader unavailable — check Downloader status in config above.")
         return
-    run_in_thread(run_downloader, config, print_output, progress, root)
+    run_task(run_downloader, config, print_output, progress, root)
 
 def start_cleaner():
-    run_in_thread(run_cleaner, config, print_output)
+    run_task(run_cleaner, config, print_output)
 
 def start_move_to_library():
-    run_in_thread(move_to_library, config, print_output)
+    run_task(move_to_library, config, print_output)
 
 # ── Button helpers ────────────────────────────────────────────────────────────
 BTN_W = 440
@@ -125,9 +142,11 @@ btn_frame = ctk.CTkFrame(root, fg_color="transparent")
 btn_frame.pack(pady=(4, 8))
 
 section_label(btn_frame, "──  ACTIONS  ──")
-make_btn(btn_frame, "  Run Shazam Downloader",        start_downloader,      "#1b3a58", "#255080")
-make_btn(btn_frame, "  Clean & Tag MP3 Files",        start_cleaner,         "#1b3a58", "#255080")
-make_btn(btn_frame, "  Move Staged Files to Library", start_move_to_library, "#1b3d28", "#245535")
+_action_buttons += [
+    make_btn(btn_frame, "  Run Shazam Downloader",        start_downloader,      "#1b3a58", "#255080"),
+    make_btn(btn_frame, "  Clean & Tag MP3 Files",        start_cleaner,         "#1b3a58", "#255080"),
+    make_btn(btn_frame, "  Move Staged Files to Library", start_move_to_library, "#1b3d28", "#245535"),
+]
 
 section_label(btn_frame, "──  SETTINGS  ──")
 make_btn(btn_frame, "  Set Library Folder",  lambda: update_and_show(
