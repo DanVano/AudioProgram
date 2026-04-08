@@ -1,21 +1,5 @@
-import ctypes
 import logging, pathlib, sys, traceback
-import tkinter as tk
-
-def _apply_dark_titlebar(root: tk.Tk) -> None:
-    """Tell Windows DWM to render the title bar in dark mode."""
-    try:
-        HWND = ctypes.windll.user32.GetParent(root.winfo_id())
-        # Attribute 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Windows 11 / late Win10)
-        # Attribute 19 = same flag on older Windows 10 builds
-        for attr in (20, 19):
-            ctypes.windll.dwmapi.DwmSetWindowAttribute(
-                HWND, attr,
-                ctypes.byref(ctypes.c_int(1)),
-                ctypes.sizeof(ctypes.c_int(1)),
-            )
-    except Exception:
-        pass  # not on Windows or DWM unavailable — fail silently
+import customtkinter as ctk
 
 from input_handler import update_and_show
 from tag_cleaner import run_cleaner, move_to_library
@@ -44,23 +28,23 @@ logging.getLogger("mutagen").setLevel(logging.ERROR)
 config = read_user_config()
 
 # ── Window ────────────────────────────────────────────────────────────────────
-root = tk.Tk()
+# CTk handles dark title bar automatically on Windows 10/11
+root = ctk.CTk()
 root.title("Audio Program  v8.0")
-root.configure(bg="#1e1e1e")
 root.resizable(False, False)
 
-tk.Label(
+ctk.CTkLabel(
     root,
     text="MP3 Downloader & Library Manager",
-    font=("Segoe UI", 18, "bold"),
-    bg="#1e1e1e", fg="#e8e8e8",
+    font=ctk.CTkFont("Segoe UI", 20, weight="bold"),
+    text_color="#e8e8e8",
 ).pack(pady=(14, 2))
 
-tk.Label(
+ctk.CTkLabel(
     root,
     text="Shazam  →  Download  →  Clean & Tag  →  Library",
-    font=("Segoe UI", 9),
-    bg="#1e1e1e", fg="#666666",
+    font=ctk.CTkFont("Segoe UI", 10),
+    text_color="#666666",
 ).pack(pady=(0, 10))
 
 # ── Output area ───────────────────────────────────────────────────────────────
@@ -73,24 +57,24 @@ progress.pack(pady=6)
 # ── Config display ────────────────────────────────────────────────────────────
 def print_config_with_line():
     text_output.configure(state="normal")
-    text_output.delete("1.0", tk.END)
+    text_output.delete("1.0", "end")
 
     def row(label, value):
-        text_output.insert(tk.END, "   - ")
-        text_output.insert(tk.END, label, "bold")
-        text_output.insert(tk.END, f":   {value}\n")
+        text_output.insert("end", "   - ")
+        text_output.insert("end", label, "bold")
+        text_output.insert("end", f":   {value}\n")
 
-    text_output.insert(tk.END, "Current Config:\n", "bold")
-    row("Library Folder",  config.get("library_folder",  "[Not Set]"))
-    row("Staging Folder",  config.get("staging_folder",  "[Not Set]"))
-    row("CSV",             config.get("csv_path",        "[Not Set]"))
-    row("Song Tags",       ", ".join(config.get("song_tags", []) or []))
-    row("Website Tags",    ", ".join(config.get("web_tags",  []) or []))
-    row("Last Scanned",    config.get("last_scanned_date", "[Not Set]"))
-    row("Downloader",      DOWNLOADER_MSG)
+    text_output.insert("end", "Current Config:\n", "bold")
+    row("Library Folder", config.get("library_folder", "[Not Set]"))
+    row("Staging Folder", config.get("staging_folder", "[Not Set]"))
+    row("CSV",            config.get("csv_path",        "[Not Set]"))
+    row("Song Tags",      ", ".join(config.get("song_tags", []) or []))
+    row("Website Tags",   ", ".join(config.get("web_tags",  []) or []))
+    row("Last Scanned",   config.get("last_scanned_date", "[Not Set]"))
+    row("Downloader",     DOWNLOADER_MSG)
 
-    text_output.insert(tk.END, ". . " * 70 + "\n", "dotted")
-    text_output.insert(tk.END, "Operational Log:\n", "logtitle")
+    text_output.insert("end", ". . " * 70 + "\n", "dotted")
+    text_output.insert("end", "Operational Log:\n", "logtitle")
     text_output.configure(state="disabled")
 
 # ── Actions ───────────────────────────────────────────────────────────────────
@@ -106,42 +90,42 @@ def start_cleaner():
 def start_move_to_library():
     run_in_thread(move_to_library, config, print_output)
 
-# ── Button helpers ─────────────────────────────────────────────────────────────
-BTN_W = 34
+# ── Button helpers ────────────────────────────────────────────────────────────
+BTN_W = 320
+BTN_H = 36
 
 def section_label(parent, text):
-    tk.Label(
+    ctk.CTkLabel(
         parent,
         text=text,
-        font=("Segoe UI", 8),
-        bg="#1e1e1e", fg="#555555",
+        font=ctk.CTkFont("Segoe UI", 9),
+        text_color="#505050",
     ).pack(pady=(10, 2))
 
-def make_btn(parent, label, cmd, bg, hover):
-    b = tk.Button(
+def make_btn(parent, label, cmd, fg, hover):
+    b = ctk.CTkButton(
         parent,
         text=label,
         command=cmd,
-        bg=bg, fg="#e8e8e8",
-        activebackground=hover, activeforeground="#ffffff",
-        highlightbackground="#2a2a2a",
-        bd=0,
-        font=("Segoe UI", 11),
-        width=BTN_W, height=1,
-        cursor="hand2",
-        anchor="w", padx=14,
+        fg_color=fg,
+        hover_color=hover,
+        text_color="#e8e8e8",
+        font=ctk.CTkFont("Segoe UI", 11),
+        width=BTN_W,
+        height=BTN_H,
+        corner_radius=6,
+        anchor="w",
     )
     b.pack(pady=2)
-    add_hover(b, normal=bg, hover=hover)
     return b
 
 # ── Menu ──────────────────────────────────────────────────────────────────────
-btn_frame = tk.Frame(root, bg="#1e1e1e")
+btn_frame = ctk.CTkFrame(root, fg_color="transparent")
 btn_frame.pack(pady=(4, 8))
 
 section_label(btn_frame, "──  ACTIONS  ──")
-make_btn(btn_frame, "  Run Shazam Downloader",      start_downloader,     "#1b3a58", "#255080")
-make_btn(btn_frame, "  Clean & Tag MP3 Files",      start_cleaner,        "#1b3a58", "#255080")
+make_btn(btn_frame, "  Run Shazam Downloader",        start_downloader,      "#1b3a58", "#255080")
+make_btn(btn_frame, "  Clean & Tag MP3 Files",        start_cleaner,         "#1b3a58", "#255080")
 make_btn(btn_frame, "  Move Staged Files to Library", start_move_to_library, "#1b3d28", "#245535")
 
 section_label(btn_frame, "──  SETTINGS  ──")
@@ -166,18 +150,15 @@ section_label(btn_frame, "")
 make_btn(btn_frame, "  Exit", root.destroy, "#3d1b1b", "#5c2222")
 
 # ── Watermark ─────────────────────────────────────────────────────────────────
-wm_frame = tk.Frame(root, bg="#1e1e1e")
+wm_frame = ctk.CTkFrame(root, fg_color="transparent")
 wm_frame.pack(side="bottom", fill="x")
-tk.Label(
+ctk.CTkLabel(
     wm_frame,
     text="v8.0   © 2025",
-    bg="#1e1e1e", fg="#3a3a3a",
-    font=("Segoe UI", 9, "italic"),
-    anchor="e", justify="right",
+    font=ctk.CTkFont("Segoe UI", 9, slant="italic"),
+    text_color="#3a3a3a",
 ).pack(side="right", padx=12, pady=4)
 
 center_window(root)
-root.update()
-_apply_dark_titlebar(root)
 print_config_with_line()
 root.mainloop()
