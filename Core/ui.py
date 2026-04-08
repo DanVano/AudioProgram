@@ -53,13 +53,15 @@ def build_output_area(root: ctk.CTk) -> ctk.CTkTextbox:
     )
     textbox.pack(fill="both", expand=True, padx=16, pady=(4, 4))
 
-    # Tag config forwarded to the underlying tk.Text widget
-    textbox.tag_config("bold",     font=("Consolas", 11, "bold"))
-    textbox.tag_config("dotted",   foreground="#383838")
-    textbox.tag_config("logtitle", font=("Consolas", 11, "bold"), foreground="#8ab4f8")
-    textbox.tag_config("ok",       foreground="#81c995")
-    textbox.tag_config("warn",     foreground="#f9c74f")
-    textbox.tag_config("err",      foreground="#f28b82")
+    # CTkTextbox blocks the 'font' option in tag_config due to its scaling system.
+    # Colour-only tags go through CTkTextbox; font tags go directly to the underlying tk.Text.
+    inner = textbox._textbox
+    inner.tag_configure("bold",     font=("Consolas", 11, "bold"))
+    inner.tag_configure("logtitle", font=("Consolas", 11, "bold"), foreground="#8ab4f8")
+    textbox.tag_config("dotted",    foreground="#383838")
+    textbox.tag_config("ok",        foreground="#81c995")
+    textbox.tag_config("warn",      foreground="#f9c74f")
+    textbox.tag_config("err",       foreground="#f28b82")
 
     return textbox
 
