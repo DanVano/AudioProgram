@@ -87,7 +87,7 @@ def run_downloader(config, print_output, progress, root):
     print_output("\n[INFO] Running Shazam downloader...")
 
     try:
-        entries = parse_shazam_csv(config["csv_path"])
+        entries = parse_shazam_csv(config["csv_path"], print_output)
         if not entries:
             print_output("[WARN] No valid entries found in CSV.")
             return
@@ -117,6 +117,9 @@ def run_downloader(config, print_output, progress, root):
             if entry["date"] <= last_scanned_date:
                 break
             try:
+                # Advance newest_date for every entry we process (skip or download)
+                newest_date = max(newest_date, entry["date"])
+
                 if already_in_library(entry["artist"], entry["title"], music_db):
                     print_output(f"[SKIP] Already in library: {entry['combined_track_info']}")
                     skipped += 1
@@ -139,12 +142,11 @@ def run_downloader(config, print_output, progress, root):
                 download_track(entry["artist"], entry["title"], output_path)
                 print_output(f"[OK] Downloaded: {output_name}")
 
-                set_id3_tags(output_path, entry["artist"], entry["title"])
+                set_id3_tags(output_path, entry["artist"], entry["title"], print_output)
 
                 # keep db current so later duplicates in this run are also caught
                 music_db.add(_normalize(entry["artist"]) + " " + _normalize(entry["title"]))
 
-                newest_date = max(newest_date, entry["date"])
                 count += 1
 
             except Exception as e:
@@ -152,7 +154,7 @@ def run_downloader(config, print_output, progress, root):
 
             progress["value"] += 1
 
-        if count > 0:
+        if newest_date > last_scanned_date:
             config["last_scanned_date"] = newest_date.strftime("%Y-%m-%dT%H:%M:%S")
             save_user_config(config)
 

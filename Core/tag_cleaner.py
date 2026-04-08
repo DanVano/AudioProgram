@@ -53,16 +53,20 @@ def clean_filename(filename, song_tags, web_tags):
 
     return f"{name}{ext}"
 
-def set_id3_tags(filepath, artist, title):
+def set_id3_tags(filepath, artist, title, print_output=None):
     """
     Returns one of: "ok", "unable", "error"
       ok      -> tags written
       unable  -> mp3 couldn't be loaded by eyeD3
       error   -> exception while saving tags (permission/other)
     """
+    def _log(msg):
+        if print_output:
+            print_output(msg)
+
     audio = eyed3.load(filepath)
     if audio is None:
-        print(f"Warning: Could not load file: {filepath}. ID3 tags not set.")
+        _log(f"[WARN] Could not load: {filepath} — ID3 tags not set.")
         return "unable"
 
     if audio.tag is None:
@@ -75,13 +79,18 @@ def set_id3_tags(filepath, artist, title):
         audio.tag.save()
         return "ok"
     except PermissionError:
-        print(f"Permission denied: {filepath} is read-only.")
+        _log(f"[ERROR] Permission denied writing tags: {filepath}")
     except Exception as e:
-        print(f"Error saving ID3 tags to {filepath}: {e}")
+        _log(f"[ERROR] Saving ID3 tags to {filepath}: {e}")
     return "error"
 
-def parse_shazam_csv(file_path):
+def parse_shazam_csv(file_path, print_output=None):
     import csv
+
+    def _log(msg):
+        if print_output:
+            print_output(msg)
+
     result = []
     try:
         with open(file_path, mode='r', encoding='utf-8') as f:
@@ -97,11 +106,11 @@ def parse_shazam_csv(file_path):
                         'combined_track_info': f"{row['Artist']} - {row['Title']}"
                     })
                 except ValueError as ve:
-                    print(f"Skipping row with invalid date: {row['TagTime']} - {ve}")
+                    _log(f"[WARN] Skipping row with invalid date: {row['TagTime']} — {ve}")
     except FileNotFoundError:
-        print(f"Error: CSV file not found at path: {file_path}")
+        _log(f"[ERROR] CSV file not found: {file_path}")
     except Exception as e:
-        print(f"Error reading CSV: {e}")
+        _log(f"[ERROR] Reading CSV: {e}")
     return result
 
 def move_to_library(config, print_output):
@@ -224,7 +233,7 @@ def run_cleaner(config, print_output):
                 base_no_ext = os.path.splitext(os.path.basename(target_path))[0]
                 if " - " in base_no_ext:
                     artist, title = base_no_ext.split(" - ", 1)
-                    status = set_id3_tags(target_path, artist.strip(), title.strip())
+                    status = set_id3_tags(target_path, artist.strip(), title.strip(), print_output)
                     if status == "ok":
                         print_output("     [Tags Set]")
                         tagged += 1
