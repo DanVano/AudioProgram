@@ -1,2 +1,2 @@
 eyed3
-requests
+yt-dlp

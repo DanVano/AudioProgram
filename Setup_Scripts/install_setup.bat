@@ -12,8 +12,15 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b
 )
 
+:: Install FFmpeg (required for MP3 conversion via yt-dlp)
+echo Installing FFmpeg...
+winget install --id Gyan.FFmpeg -e --accept-source-agreements --accept-package-agreements
+IF %ERRORLEVEL% NEQ 0 (
+    echo Warning: FFmpeg install may have failed or is already installed. Continuing...
+)
+
 :: Install required packages
-echo Installing dependencies...
+echo Installing Python dependencies...
 pip install -r requirements.txt
 
 :: Run the program

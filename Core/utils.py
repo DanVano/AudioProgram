@@ -5,7 +5,8 @@ _USER_CONFIG_PATH = "user_config.txt"
 
 def read_user_config():
     config = {
-        "music_folder": "C:/Desktop/Music",
+        "library_folder": "C:/Desktop/Music",
+        "staging_folder": "C:/Desktop/Music/Staging",
         "csv_path": "C:/Desktop/Music/shazam_library.csv",
         "song_tags": [
             " (Lyric Video)", " (Audio)", " (Official Audio)", " (Official Music Video)",
@@ -25,6 +26,8 @@ def read_user_config():
                 for line in f:
                     if '=' in line:
                         key, val = line.strip().split("=", 1)
+                        if key == "music_folder":   # migrate old single-folder config
+                            key = "library_folder"
                         if key in ["song_tags", "web_tags"]:
                             config[key] = [v.strip() for v in val.split("|") if v.strip()]
                         else:

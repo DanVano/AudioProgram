@@ -1,4 +1,4 @@
-import eyed3, os, re
+import eyed3, os, re, shutil
 
 from datetime import datetime
 
@@ -104,16 +104,56 @@ def parse_shazam_csv(file_path):
         print(f"Error reading CSV: {e}")
     return result
 
+def move_to_library(config, print_output):
+    """Move all cleaned MP3s from staging_folder to library_folder."""
+    staging_folder = config.get("staging_folder", "")
+    library_folder = config.get("library_folder", "")
+
+    if not staging_folder or not os.path.isdir(staging_folder):
+        print_output(f"[ERROR] Staging folder not found: {staging_folder or '[Not Set]'}")
+        return
+    if not library_folder or not os.path.isdir(library_folder):
+        print_output(f"[ERROR] Library folder not found: {library_folder or '[Not Set]'}")
+        return
+
+    files = [f for f in os.listdir(staging_folder) if f.lower().endswith(".mp3")]
+    if not files:
+        print_output("[INFO] Staging folder is empty — nothing to move.")
+        return
+
+    print_output(f"[INFO] Moving {len(files)} file(s) to library...")
+    moved = 0
+    failed = 0
+    for fname in files:
+        src = os.path.join(staging_folder, fname)
+        dst = os.path.join(library_folder, fname)
+        if os.path.exists(dst):
+            base, ext = os.path.splitext(fname)
+            i = 2
+            while os.path.exists(dst):
+                dst = os.path.join(library_folder, f"{base} ({i}){ext}")
+                i += 1
+        try:
+            shutil.move(src, dst)
+            print_output(f"[MOVED] {fname}")
+            moved += 1
+        except Exception as e:
+            print_output(f"[ERROR] Could not move {fname}: {e}")
+            failed += 1
+
+    print_output(f"\n[INFO] Moved {moved} | Failed {failed}")
+
+
 def run_cleaner(config, print_output):
     """
-    Cleans MP3 filenames in the configured music_folder and sets basic ID3 tags.
+    Cleans MP3 filenames in staging_folder and sets basic ID3 tags.
     Final line now shows:
       [INFO] ... | Errors X | Unable to load mp3 Y
     """
     import logging
-    music_folder = config.get("music_folder")
+    music_folder = config.get("staging_folder")
     if not music_folder or not os.path.isdir(music_folder):
-        print_output(f"[INFO] Music folder not found: {music_folder or '[Not Set]'}")
+        print_output(f"[INFO] Staging folder not found: {music_folder or '[Not Set]'}")
         return
 
     files = [f for f in os.listdir(music_folder) if f.lower().endswith(".mp3")]

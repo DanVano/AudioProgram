@@ -1,66 +1,84 @@
 import os
-import requests
+import re
 
-from tag_cleaner import clean_filename, set_id3_tags
+try:
+    import yt_dlp
+except ImportError:
+    raise RuntimeError("yt-dlp is not installed. Run: pip install yt-dlp")
+
+from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
 from utils import read_user_config, save_user_config
 
-config = read_user_config()
-rapidapi_key = config.get("rapidapi_key", "")
-if not rapidapi_key:
-    raise RuntimeError("Missing RapidAPI key in user_config.txt")
 
-def download_youtube_audio(youtube_url, output_filename="downloaded.mp3"):
-    endpoint = "https://youtube-to-mp315.p.rapidapi.com/download"
-    headers = {
-        "X-RapidAPI-Host": "youtube-to-mp315.p.rapidapi.com",
-        "X-RapidAPI-Key": rapidapi_key,
-        "Content-Type": "application/json"
+def _normalize(text):
+    """Lowercase and strip punctuation for loose artist/title matching."""
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+def build_music_database(music_folder):
+    """
+    Scan music_folder for MP3s and return a set of normalized 'artist title' keys.
+    Reads filenames in 'Artist - Title.mp3' format, which is what this program produces.
+    """
+    db = set()
+    if not os.path.isdir(music_folder):
+        return db
+    for fname in os.listdir(music_folder):
+        if not fname.lower().endswith(".mp3"):
+            continue
+        stem = os.path.splitext(fname)[0]
+        if " - " in stem:
+            artist, title = stem.split(" - ", 1)
+            db.add(_normalize(artist) + " " + _normalize(title))
+    return db
+
+def already_in_library(artist, title, db):
+    """Return True if this artist+title already exists in the scanned music database."""
+    return (_normalize(artist) + " " + _normalize(title)) in db
+
+def download_track(artist, title, output_path):
+    """
+    Search YouTube for 'artist - title', download the best available audio,
+    and convert to MP3 at the highest quality via FFmpeg.
+
+    output_path must be the full path including the .mp3 extension.
+    Raises RuntimeError on failure.
+
+    Requires FFmpeg to be installed and on PATH for MP3 conversion.
+    """
+    query = f"ytsearch1:{artist} - {title}"
+    # yt-dlp appends the extension itself, so strip .mp3 from the template
+    stem = output_path[:-4] if output_path.lower().endswith(".mp3") else output_path
+
+    ydl_opts = {
+        "format": "bestaudio/best",
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "0",    # VBR best (~320kbps)
+        }],
+        "outtmpl": stem + ".%(ext)s",
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "max_downloads": 1,
     }
-    payload = {
-        "url": youtube_url,
-        "format": "mp3",
-        "quality": 0
-    }
 
     try:
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f"Failed to get download link: {e}")
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([query])
+    except yt_dlp.utils.DownloadError as e:
+        raise RuntimeError(f"yt-dlp: {e}")
 
-    try:
-        resp_json = response.json()
-        download_link = resp_json["progress"]["downloadLink"]
-    except (KeyError, ValueError) as e:
-        raise RuntimeError(f"Unexpected response structure: {e}")
+    if not os.path.exists(output_path):
+        raise RuntimeError(f"File not found after download — FFmpeg may not be installed: {output_path}")
 
-    config = read_user_config()
-    music_folder = config.get("music_folder", "downloads")
-    os.makedirs(music_folder, exist_ok=True)
-    file_path = os.path.join(music_folder, output_filename)
+    return output_path
 
-    try:
-        dl_response = requests.get(download_link, stream=True, timeout=60)
-        dl_response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f"File download failed: {e}")
-
-    try:
-        with open(file_path, "wb") as f:
-            for chunk in dl_response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
-    except IOError as e:
-        raise RuntimeError(f"Failed to write file: {e}")
-
-    return file_path
-
-def _get_youtube_url_from_track(artist, title):
-    # Replace with real YouTube search logic as needed
-    return "https://www.youtube.com/watch?v=uHDyFWS_WjQ"
 
 def run_downloader(config, print_output, progress, root):
-    from tag_cleaner import parse_shazam_csv
     from datetime import datetime
     print_output("\n[INFO] Running Shazam downloader...")
 
@@ -77,50 +95,65 @@ def run_downloader(config, print_output, progress, root):
             last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
         except ValueError:
             last_scanned_date = datetime.min
-            
+
+        library_folder = config.get("library_folder", "")
+        staging_folder = config.get("staging_folder", "downloads")
+        os.makedirs(staging_folder, exist_ok=True)
+
+        music_db = build_music_database(library_folder)
+        print_output(f"[INFO] Library scanned: {len(music_db)} existing tracks found.")
+        print_output(f"[INFO] New downloads → {staging_folder}")
+
         count = 0
-        newest_date = last_scanned_date  # separate tracker — never mutate last_scanned_date
-        entries = sorted(entries, key=lambda e: e['date'], reverse=True)
+        skipped = 0
+        newest_date = last_scanned_date
+        entries = sorted(entries, key=lambda e: e["date"], reverse=True)
+
         for entry in entries:
-            if entry['date'] <= last_scanned_date:  # safe: last_scanned_date stays fixed
+            if entry["date"] <= last_scanned_date:
                 break
             try:
-                yt_url = _get_youtube_url_from_track(entry['artist'], entry['title'])
+                if already_in_library(entry["artist"], entry["title"], music_db):
+                    print_output(f"[SKIP] Already in library: {entry['combined_track_info']}")
+                    skipped += 1
+                    progress["value"] += 1
+                    continue
 
-                # build a target name like "Artist - Title.mp3" and clean it
                 raw_name = f"{entry['artist']} - {entry['title']}.mp3"
                 output_name = clean_filename(raw_name, config.get("song_tags", []), config.get("web_tags", []))
 
-                # avoid accidental overwrite by uniquifying if needed
-                music_folder = config.get("music_folder", "downloads")
-                os.makedirs(music_folder, exist_ok=True)
+                # uniquify filename if a collision exists in staging
                 base, ext = os.path.splitext(output_name)
                 candidate = output_name
                 i = 2
-                while os.path.exists(os.path.join(music_folder, candidate)):
+                while os.path.exists(os.path.join(staging_folder, candidate)):
                     candidate = f"{base} ({i}){ext}"
                     i += 1
                 output_name = candidate
 
-                filepath = download_youtube_audio(yt_url, output_name)
+                output_path = os.path.join(staging_folder, output_name)
+                download_track(entry["artist"], entry["title"], output_path)
                 print_output(f"[OK] Downloaded: {output_name}")
 
-                # write ID3 tags from the parsed artist/title
-                set_id3_tags(filepath, entry['artist'], entry['title'])
+                set_id3_tags(output_path, entry["artist"], entry["title"])
 
-                newest_date = max(newest_date, entry['date'])  # track highest date seen
+                # keep db current so later duplicates in this run are also caught
+                music_db.add(_normalize(entry["artist"]) + " " + _normalize(entry["title"]))
+
+                newest_date = max(newest_date, entry["date"])
                 count += 1
+
             except Exception as e:
-                print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
+                print_output(f"[ERROR] {entry['combined_track_info']}: {e}")
+
+            progress["value"] += 1
 
         if count > 0:
             config["last_scanned_date"] = newest_date.strftime("%Y-%m-%dT%H:%M:%S")
             save_user_config(config)
-            print_output(f"[INFO] {count} new tracks downloaded.")
-        else:
-            print_output("[INFO] No new tracks to download.")
 
-        progress["value"] = 0  # Reset after all done
+        print_output(f"\n[INFO] Downloaded {count} | Already in Library {skipped}")
+        progress["value"] = 0
 
     except Exception as e:
         print_output(f"[ERROR] Unexpected error: {e}")
