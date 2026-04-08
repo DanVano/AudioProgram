@@ -23,8 +23,6 @@ IF %ERRORLEVEL% NEQ 0 (
 echo Installing Python dependencies...
 pip install -r requirements.txt
 
-:: Run the program
+:: Launch the program (no CMD window)
 echo Launching AudioProgram...
-python core/main.py
-
-pause
+start "" pythonw Core\main.py

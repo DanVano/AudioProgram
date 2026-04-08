@@ -1,4 +1,3 @@
 @echo off
-cd ..
-python Core/main.py
-pause
+cd /d "%~dp0.."
+start "" pythonw Core\main.py
