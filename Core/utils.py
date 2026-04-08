@@ -45,11 +45,5 @@ def save_user_config(config):
             f.write(f"{key}={val}\n")
 
 def update_user_config(config, key, new_value):
-    if isinstance(config.get(key), list):
-        if isinstance(new_value, str):
-            config[key].append(new_value)
-        elif isinstance(new_value, list):
-            config[key].extend(new_value)
-    else:
-        config[key] = new_value
+    config[key] = new_value
     save_user_config(config)

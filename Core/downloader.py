@@ -1,10 +1,14 @@
 import os
 import re
+import shutil
 
 try:
     import yt_dlp
 except ImportError:
     raise RuntimeError("yt-dlp is not installed. Run: pip install yt-dlp")
+
+if not shutil.which("ffmpeg"):
+    raise RuntimeError("FFmpeg not found on PATH. Run: winget install Gyan.FFmpeg")
 
 from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
 from utils import read_user_config, save_user_config
