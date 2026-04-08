@@ -139,7 +139,11 @@ def run_downloader(config, print_output, progress, root):
                 output_name = candidate
 
                 output_path = os.path.join(staging_folder, output_name)
-                download_track(entry["artist"], entry["title"], output_path)
+                progress.pulse()
+                try:
+                    download_track(entry["artist"], entry["title"], output_path)
+                finally:
+                    progress.stop_pulse()
                 print_output(f"[OK] Downloaded: {output_name}")
 
                 set_id3_tags(output_path, entry["artist"], entry["title"], print_output)

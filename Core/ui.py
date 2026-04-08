@@ -13,22 +13,57 @@ class ProgressWrapper:
     """
     Translates ttk-style progress["value"] / progress["maximum"] assignments
     into CTkProgressBar.set() calls so downloader.py needs no changes.
+
+    Also supports pulse() / stop_pulse() for indeterminate animation during
+    long waits (e.g. active downloads).
     """
-    def __init__(self, bar: ctk.CTkProgressBar):
-        self._bar = bar
+    def __init__(self, bar: ctk.CTkProgressBar, root: ctk.CTk):
+        self._bar   = bar
+        self._root  = root
         self._value   = 0
         self._maximum = 100
+        self._pulse_stop: threading.Event | None = None
 
     def __setitem__(self, key, val):
         if key == "value":
             self._value = int(val)
-            frac = self._value / self._maximum if self._maximum else 0
-            self._bar.set(min(max(frac, 0.0), 1.0))
+            if self._pulse_stop is None:          # don't fight the animation
+                frac = self._value / self._maximum if self._maximum else 0
+                self._bar.set(min(max(frac, 0.0), 1.0))
         elif key == "maximum":
             self._maximum = max(int(val), 1)
 
     def __getitem__(self, key):
         return self._value if key == "value" else self._maximum
+
+    def pulse(self):
+        """Start a bouncing animation — call before a long blocking operation."""
+        if self._pulse_stop is not None:
+            return  # already pulsing
+        stop_evt = threading.Event()
+        self._pulse_stop = stop_evt
+
+        def _animate():
+            pos, direction = 0.0, 1
+            while not stop_evt.is_set():
+                self._root.after(0, lambda p=pos: self._bar.set(p))
+                stop_evt.wait(0.025)              # ~40 fps
+                pos += 0.025 * direction
+                if pos >= 1.0:
+                    pos, direction = 1.0, -1
+                elif pos <= 0.0:
+                    pos, direction = 0.0, 1
+
+        threading.Thread(target=_animate, daemon=True).start()
+
+    def stop_pulse(self):
+        """Stop the animation and restore the bar to its determinate position."""
+        if self._pulse_stop is None:
+            return
+        self._pulse_stop.set()
+        self._pulse_stop = None
+        frac = self._value / self._maximum if self._maximum else 0
+        self._root.after(0, lambda: self._bar.set(min(max(frac, 0.0), 1.0)))
 
     # Delegate geometry methods so callers can do progress.pack(...)
     def pack(self, **kw):  self._bar.pack(**kw)
@@ -115,7 +150,7 @@ def build_progressbar(root: ctk.CTk) -> ProgressWrapper:
         corner_radius=3,
     )
     bar.set(0)
-    return ProgressWrapper(bar)
+    return ProgressWrapper(bar, root)
 
 
 def add_hover(widget, normal: str, hover: str):
