@@ -79,9 +79,10 @@ def run_downloader(config, print_output, progress, root):
             last_scanned_date = datetime.min
             
         count = 0
+        newest_date = last_scanned_date  # separate tracker — never mutate last_scanned_date
         entries = sorted(entries, key=lambda e: e['date'], reverse=True)
         for entry in entries:
-            if entry['date'] <= last_scanned_date:
+            if entry['date'] <= last_scanned_date:  # safe: last_scanned_date stays fixed
                 break
             try:
                 yt_url = _get_youtube_url_from_track(entry['artist'], entry['title'])
@@ -107,13 +108,13 @@ def run_downloader(config, print_output, progress, root):
                 # write ID3 tags from the parsed artist/title
                 set_id3_tags(filepath, entry['artist'], entry['title'])
 
-                last_scanned_date = entry['date']
-                config["last_scanned_date"] = last_scanned_date.strftime("%Y-%m-%dT%H:%M:%S")
+                newest_date = max(newest_date, entry['date'])  # track highest date seen
                 count += 1
             except Exception as e:
                 print_output(f"[ERROR] Failed to process track {entry['combined_track_info']}: {e}")
 
         if count > 0:
+            config["last_scanned_date"] = newest_date.strftime("%Y-%m-%dT%H:%M:%S")
             save_user_config(config)
             print_output(f"[INFO] {count} new tracks downloaded.")
         else:
