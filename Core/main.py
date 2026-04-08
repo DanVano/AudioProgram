@@ -31,20 +31,21 @@ config = read_user_config()
 # CTk handles dark title bar automatically on Windows 10/11
 root = ctk.CTk()
 root.title("Audio Program  v8.0")
+root.geometry("1080x1170")
 root.resizable(False, False)
 
 ctk.CTkLabel(
     root,
     text="MP3 Downloader & Library Manager",
-    font=ctk.CTkFont("Segoe UI", 20, weight="bold"),
+    font=ctk.CTkFont("Segoe UI", 26, weight="bold"),
     text_color="#e8e8e8",
 ).pack(pady=(14, 2))
 
 ctk.CTkLabel(
     root,
     text="Shazam  →  Download  →  Clean & Tag  →  Library",
-    font=ctk.CTkFont("Segoe UI", 10),
-    text_color="#666666",
+    font=ctk.CTkFont("Segoe UI", 14),
+    text_color="#999999",
 ).pack(pady=(0, 10))
 
 # ── Output area ───────────────────────────────────────────────────────────────
@@ -91,14 +92,14 @@ def start_move_to_library():
     run_in_thread(move_to_library, config, print_output)
 
 # ── Button helpers ────────────────────────────────────────────────────────────
-BTN_W = 320
-BTN_H = 36
+BTN_W = 440
+BTN_H = 38
 
 def section_label(parent, text):
     ctk.CTkLabel(
         parent,
         text=text,
-        font=ctk.CTkFont("Segoe UI", 9),
+        font=ctk.CTkFont("Segoe UI", 13),
         text_color="#505050",
     ).pack(pady=(10, 2))
 
@@ -110,7 +111,7 @@ def make_btn(parent, label, cmd, fg, hover):
         fg_color=fg,
         hover_color=hover,
         text_color="#e8e8e8",
-        font=ctk.CTkFont("Segoe UI", 11),
+        font=ctk.CTkFont("Segoe UI", 15),
         width=BTN_W,
         height=BTN_H,
         corner_radius=6,
@@ -131,20 +132,20 @@ make_btn(btn_frame, "  Move Staged Files to Library", start_move_to_library, "#1
 section_label(btn_frame, "──  SETTINGS  ──")
 make_btn(btn_frame, "  Set Library Folder",  lambda: update_and_show(
     root, text_output, config, "library_folder", "library folder", ask_dir=True),
-    "#252525", "#343434")
+    "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Set Staging Folder",  lambda: update_and_show(
     root, text_output, config, "staging_folder", "staging folder", ask_dir=True),
-    "#252525", "#343434")
+    "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Set CSV File Path",   lambda: update_and_show(
     root, text_output, config, "csv_path", "CSV file",
     ask_filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")]),
-    "#252525", "#343434")
+    "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Edit Song Tags List", lambda: update_and_show(
     root, text_output, config, "song_tags", "song tags", is_list=True),
-    "#252525", "#343434")
+    "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Edit Web Tags List",  lambda: update_and_show(
     root, text_output, config, "web_tags", "web tags", is_list=True),
-    "#252525", "#343434")
+    "#1c1c1c", "#2a2a2a")
 
 section_label(btn_frame, "")
 make_btn(btn_frame, "  Exit", root.destroy, "#3d1b1b", "#5c2222")
@@ -155,7 +156,7 @@ wm_frame.pack(side="bottom", fill="x")
 ctk.CTkLabel(
     wm_frame,
     text="v8.0   © 2025",
-    font=ctk.CTkFont("Segoe UI", 9, slant="italic"),
+    font=ctk.CTkFont("Segoe UI", 13, slant="italic"),
     text_color="#3a3a3a",
 ).pack(side="right", padx=12, pady=4)
 

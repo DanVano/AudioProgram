@@ -39,10 +39,10 @@ class ProgressWrapper:
 def build_output_area(root: ctk.CTk) -> ctk.CTkTextbox:
     textbox = ctk.CTkTextbox(
         root,
-        height=280,
-        width=700,
-        font=("Consolas", 11),
-        fg_color="#1a1a1a",
+        height=410,
+        width=950,
+        font=("Consolas", 14),
+        fg_color="#171717",
         text_color="#d0d0d0",
         scrollbar_button_color="#2e2e2e",
         scrollbar_button_hover_color="#444444",
@@ -56,8 +56,8 @@ def build_output_area(root: ctk.CTk) -> ctk.CTkTextbox:
     # CTkTextbox blocks the 'font' option in tag_config due to its scaling system.
     # Colour-only tags go through CTkTextbox; font tags go directly to the underlying tk.Text.
     inner = textbox._textbox
-    inner.tag_configure("bold",     font=("Consolas", 11, "bold"))
-    inner.tag_configure("logtitle", font=("Consolas", 11, "bold"), foreground="#8ab4f8")
+    inner.tag_configure("bold",     font=("Consolas", 14, "bold"))
+    inner.tag_configure("logtitle", font=("Consolas", 14, "bold"), foreground="#8ab4f8")
     textbox.tag_config("dotted",    foreground="#383838")
     textbox.tag_config("ok",        foreground="#81c995")
     textbox.tag_config("warn",      foreground="#f9c74f")
@@ -108,7 +108,7 @@ def make_print_output(root: ctk.CTk, textbox: ctk.CTkTextbox):
 def build_progressbar(root: ctk.CTk) -> ProgressWrapper:
     bar = ctk.CTkProgressBar(
         root,
-        width=420,
+        width=580,
         height=6,
         fg_color="#252525",
         progress_color="#4a90d9",
