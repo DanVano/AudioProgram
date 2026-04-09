@@ -47,7 +47,7 @@ def clean_filename(filename, song_tags, web_tags):
     ])
 
     # 5) Tidy separators/spaces/double dashes
-    name = re.sub(r"\s*-\s*", " - ", name)     # normalize dashes
+    name = re.sub(r'\s+-\s*|\s*-\s+', ' - ', name)  # normalize separator dashes only (preserves hyphenated words)
     name = re.sub(r"\s{2,}", " ", name).strip()
     name = re.sub(r"^-\s*|\s*-$", "", name)    # strip leading/trailing dash
 
