@@ -87,6 +87,26 @@ def run_downloader(config, print_output, progress, root):
     print_output("\n[INFO] Running Shazam downloader...")
 
     try:
+        # ── Validate folders before doing any work ────────────────────────
+        library_folder = config.get("library_folder", "")
+        staging_folder = config.get("staging_folder", "")
+
+        if not library_folder or not os.path.isdir(library_folder):
+            print_output(f"[ERROR] Library folder not found: {library_folder or '[Not Set]'}")
+            print_output("[ERROR] Set a valid Library Folder in Settings before downloading.")
+            return
+
+        if not staging_folder:
+            print_output("[ERROR] Staging folder is not set. Configure it in Settings.")
+            return
+
+        try:
+            os.makedirs(staging_folder, exist_ok=True)
+        except Exception as e:
+            print_output(f"[ERROR] Could not create staging folder '{staging_folder}': {e}")
+            return
+
+        # ── Parse CSV ─────────────────────────────────────────────────────
         entries = parse_shazam_csv(config["csv_path"], print_output)
         if not entries:
             print_output("[WARN] No valid entries found in CSV.")
@@ -99,10 +119,6 @@ def run_downloader(config, print_output, progress, root):
             last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
         except ValueError:
             last_scanned_date = datetime.min
-
-        library_folder = config.get("library_folder", "")
-        staging_folder = config.get("staging_folder", "downloads")
-        os.makedirs(staging_folder, exist_ok=True)
 
         music_db = build_music_database(library_folder)
         print_output(f"[INFO] Library scanned: {len(music_db)} existing tracks found.")
