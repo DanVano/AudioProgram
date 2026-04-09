@@ -1,0 +1,14 @@
+# Personal notes — never commit
+../../Notes/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# User config (contains local paths)
+user_config.txt
+
+# VS Code
+.vs/
+*.code-workspace
