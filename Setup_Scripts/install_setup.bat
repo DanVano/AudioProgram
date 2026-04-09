@@ -1,8 +1,8 @@
 @echo off
 echo === AudioProgram Setup ===
 
-:: Go up one directory to the project root
-cd ..
+:: Go up one directory to the project root (absolute, so works from any invocation path)
+cd /d "%~dp0.."
 
 :: Optional: check if Python is installed
 python --version >nul 2>&1
