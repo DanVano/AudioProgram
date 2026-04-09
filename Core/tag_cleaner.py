@@ -46,7 +46,11 @@ def clean_filename(filename, song_tags, web_tags):
         r"[\[\]\{\}]",
     ])
 
-    # 5) Tidy separators/spaces/double dashes
+    # 5) Remove any empty brackets left after step 4 stripped their contents
+    name = re.sub(r'\(\s*\)', '', name)
+    name = re.sub(r'\[\s*\]', '', name)
+
+    # 6) Tidy separators/spaces/double dashes
     name = re.sub(r'\s+-\s*|\s*-\s+', ' - ', name)  # normalize separator dashes only (preserves hyphenated words)
     name = re.sub(r"\s{2,}", " ", name).strip()
     name = re.sub(r"^-\s*|\s*-$", "", name)    # strip leading/trailing dash
@@ -162,7 +166,7 @@ def run_cleaner(config, print_output):
     import logging
     music_folder = config.get("staging_folder")
     if not music_folder or not os.path.isdir(music_folder):
-        print_output(f"[INFO] Staging folder not found: {music_folder or '[Not Set]'}")
+        print_output(f"[ERROR] Staging folder not found: {music_folder or '[Not Set]'}")
         return
 
     files = [f for f in os.listdir(music_folder) if f.lower().endswith(".mp3")]

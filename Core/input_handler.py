@@ -15,7 +15,7 @@ def prompt_file(root, label, filetypes):
 def prompt_list(root, label):
     return simpledialog.askstring("Set List", f"Enter one or more {label} (separated by |):", parent=root)
 
-def update_and_show(root, text_widget, config, key, label,
+def update_and_show(root, config, key, label,
                     ask_dir=False, ask_filetypes=None, is_list=False,
                     refresh_fn=None):
     if ask_dir:

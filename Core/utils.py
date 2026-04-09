@@ -38,11 +38,14 @@ def read_user_config():
     return config
 
 def save_user_config(config):
-    with open(_USER_CONFIG_PATH, "w", encoding="utf-8") as f:
-        for key, val in config.items():
-            if isinstance(val, list):
-                val = "|".join(val)
-            f.write(f"{key}={val}\n")
+    try:
+        with open(_USER_CONFIG_PATH, "w", encoding="utf-8") as f:
+            for key, val in config.items():
+                if isinstance(val, list):
+                    val = "|".join(val)
+                f.write(f"{key}={val}\n")
+    except Exception as e:
+        print(f"Warning: Could not save config: {e}")
 
 def update_user_config(config, key, new_value):
     config[key] = new_value

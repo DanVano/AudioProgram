@@ -150,24 +150,24 @@ _action_buttons += [
 
 section_label(btn_frame, "──  SETTINGS  ──")
 make_btn(btn_frame, "  Set Library Folder",  lambda: update_and_show(
-    root, text_output, config, "library_folder", "library folder",
+    root, config, "library_folder", "library folder",
     ask_dir=True, refresh_fn=print_config_with_line),
     "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Set Staging Folder",  lambda: update_and_show(
-    root, text_output, config, "staging_folder", "staging folder",
+    root, config, "staging_folder", "staging folder",
     ask_dir=True, refresh_fn=print_config_with_line),
     "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Set CSV File Path",   lambda: update_and_show(
-    root, text_output, config, "csv_path", "CSV file",
+    root, config, "csv_path", "CSV file",
     ask_filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")],
     refresh_fn=print_config_with_line),
     "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Edit Song Tags List", lambda: update_and_show(
-    root, text_output, config, "song_tags", "song tags",
+    root, config, "song_tags", "song tags",
     is_list=True, refresh_fn=print_config_with_line),
     "#1c1c1c", "#2a2a2a")
 make_btn(btn_frame, "  Edit Web Tags List",  lambda: update_and_show(
-    root, text_output, config, "web_tags", "web tags",
+    root, config, "web_tags", "web tags",
     is_list=True, refresh_fn=print_config_with_line),
     "#1c1c1c", "#2a2a2a")
 

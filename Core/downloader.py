@@ -107,7 +107,11 @@ def run_downloader(config, print_output, progress, root):
             return
 
         # ── Parse CSV ─────────────────────────────────────────────────────
-        entries = parse_shazam_csv(config["csv_path"], print_output)
+        csv_path = config.get("csv_path", "")
+        if not csv_path:
+            print_output("[ERROR] CSV file path is not set. Configure it in Settings.")
+            return
+        entries = parse_shazam_csv(csv_path, print_output)
         if not entries:
             print_output("[WARN] No valid entries found in CSV.")
             return
