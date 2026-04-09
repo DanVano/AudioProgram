@@ -115,10 +115,13 @@ def run_downloader(config, print_output, progress, root):
         progress["value"] = 0
         progress["maximum"] = len(entries)
 
+        raw_date = config.get("last_scanned_date", "")
         try:
-            last_scanned_date = datetime.strptime(config["last_scanned_date"], "%Y-%m-%dT%H:%M:%S")
-        except ValueError:
+            last_scanned_date = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%S")
+        except (ValueError, TypeError):
             last_scanned_date = datetime.min
+            print_output(f"[WARN] last_scanned_date is invalid or missing ('{raw_date}').")
+            print_output("[WARN] All CSV entries will be processed. This may trigger many downloads.")
 
         music_db = build_music_database(library_folder)
         print_output(f"[INFO] Library scanned: {len(music_db)} existing tracks found.")

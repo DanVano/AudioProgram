@@ -1,2 +1,6 @@
-song_tags=(Only This)
-library_folder=C:/NewMusic
+csv_path=C:\Users\skftw\AppData\Local\Temp\tmpg6zzzm5i\test.csv
+song_tags=
+web_tags=
+library_folder=C:\Users\skftw\AppData\Local\Temp\tmpg6zzzm5i
+staging_folder=C:\Users\skftw\AppData\Local\Temp\tmpvlxg03zv
+last_scanned_date=2025-06-01T12:00:00
