@@ -242,13 +242,13 @@ def run_cleaner(config, print_output):
                         print_output("     [Tags Set]")
                         tagged += 1
                     elif status == "unable":
-                        print_output("     [Tags Skipped]")
+                        print_output("     [Tags: Load Failed]")
                         unable_to_load += 1
                     else:  # "error"
-                        print_output("     [Tags Skipped]")
+                        print_output("     [Tags: Save Failed]")
                         errors += 1
                 else:
-                    print_output("     [Tags Skipped]")
+                    print_output("     [Tags: No Separator]")
 
             except Exception as e:
                 errors += 1

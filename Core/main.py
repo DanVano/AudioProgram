@@ -19,7 +19,7 @@ try:
     from downloader import run_downloader
     DOWNLOADER_AVAILABLE = True
     DOWNLOADER_MSG = "Ready  (yt-dlp)"
-except RuntimeError as e:
+except Exception as e:
     DOWNLOADER_AVAILABLE = False
     DOWNLOADER_MSG = f"Disabled — {e}"
 
