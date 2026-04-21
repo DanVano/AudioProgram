@@ -1,7 +1,9 @@
 import os
+import logging
 
+_log = logging.getLogger(__name__)
 
-_USER_CONFIG_PATH = "user_config.txt"
+_USER_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "user_config.txt")
 
 def read_user_config():
     config = {
@@ -29,11 +31,11 @@ def read_user_config():
                         if key == "music_folder":   # migrate old single-folder config
                             key = "library_folder"
                         if key in ["song_tags", "web_tags"]:
-                            config[key] = [v.strip() for v in val.split("|") if v.strip()]
+                            config[key] = [v for v in val.split("|") if v]
                         else:
                             config[key] = val
         except Exception as e:
-            print(f"Warning: Failed to load config. Using defaults. Error: {e}")
+            _log.warning("Failed to load config. Using defaults. Error: %s", e)
 
     return config
 
@@ -45,7 +47,7 @@ def save_user_config(config):
                     val = "|".join(val)
                 f.write(f"{key}={val}\n")
     except Exception as e:
-        print(f"Warning: Could not save config: {e}")
+        _log.warning("Could not save config: %s", e)
 
 def update_user_config(config, key, new_value):
     config[key] = new_value

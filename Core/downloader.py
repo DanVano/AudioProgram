@@ -11,7 +11,7 @@ if not shutil.which("ffmpeg"):
     raise RuntimeError("FFmpeg not found on PATH. Run: winget install Gyan.FFmpeg")
 
 from tag_cleaner import clean_filename, set_id3_tags, parse_shazam_csv
-from utils import read_user_config, save_user_config
+from utils import save_user_config
 
 
 def _normalize(text):
@@ -82,7 +82,7 @@ def download_track(artist, title, output_path):
     return output_path
 
 
-def run_downloader(config, print_output, progress, root):
+def run_downloader(config, print_output, progress):
     from datetime import datetime
     print_output("\n[INFO] Running Shazam downloader...")
 
@@ -98,6 +98,10 @@ def run_downloader(config, print_output, progress, root):
 
         if not staging_folder:
             print_output("[ERROR] Staging folder is not set. Configure it in Settings.")
+            return
+
+        if os.path.exists(staging_folder) and not os.path.isdir(staging_folder):
+            print_output(f"[ERROR] Staging folder path is a file, not a directory: {staging_folder}")
             return
 
         try:
@@ -116,9 +120,6 @@ def run_downloader(config, print_output, progress, root):
             print_output("[WARN] No valid entries found in CSV.")
             return
 
-        progress["value"] = 0
-        progress["maximum"] = len(entries)
-
         raw_date = config.get("last_scanned_date", "")
         try:
             last_scanned_date = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%S")
@@ -135,6 +136,9 @@ def run_downloader(config, print_output, progress, root):
         skipped = 0
         newest_date = last_scanned_date
         entries = sorted(entries, key=lambda e: e["date"], reverse=True)
+        new_count = sum(1 for e in entries if e["date"] > last_scanned_date)
+        progress["value"] = 0
+        progress["maximum"] = max(new_count, 1)
 
         for entry in entries:
             if entry["date"] <= last_scanned_date:
@@ -169,7 +173,9 @@ def run_downloader(config, print_output, progress, root):
                     progress.stop_pulse()
                 print_output(f"[OK] Downloaded: {output_name}")
 
-                set_id3_tags(output_path, entry["artist"], entry["title"], print_output)
+                tag_status = set_id3_tags(output_path, entry["artist"], entry["title"], print_output)
+                if tag_status != "ok":
+                    print_output(f"[WARN] Tags not saved for: {output_name}")
 
                 # keep db current so later duplicates in this run are also caught
                 music_db.add(_normalize(entry["artist"]) + " " + _normalize(entry["title"]))

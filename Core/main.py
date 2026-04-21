@@ -6,13 +6,16 @@ from tag_cleaner import run_cleaner, move_to_library
 from utils import read_user_config
 from ui import (
     build_output_area, build_progressbar, make_print_output,
-    add_hover, center_window, run_in_thread,
+    center_window, run_in_thread,
 )
 
 def excepthook(exc_type, exc, tb):
-    log = pathlib.Path.home() / "AudioProgram_error.log"
-    with log.open("a", encoding="utf-8") as f:
-        traceback.print_exception(exc_type, exc, tb, file=f)
+    try:
+        log = pathlib.Path.home() / "AudioProgram_error.log"
+        with log.open("a", encoding="utf-8") as f:
+            traceback.print_exception(exc_type, exc, tb, file=f)
+    except Exception:
+        traceback.print_exception(exc_type, exc, tb)
 sys.excepthook = excepthook
 
 try:
@@ -69,8 +72,10 @@ def print_config_with_line():
     row("Library Folder", config.get("library_folder", "[Not Set]"))
     row("Staging Folder", config.get("staging_folder", "[Not Set]"))
     row("CSV",            config.get("csv_path",        "[Not Set]"))
-    row("Song Tags",      ", ".join(config.get("song_tags", []) or []))
-    row("Website Tags",   ", ".join(config.get("web_tags",  []) or []))
+    song_tags = config.get("song_tags") or []
+    web_tags  = config.get("web_tags")  or []
+    row("Song Tags",    ", ".join(song_tags if isinstance(song_tags, list) else []))
+    row("Website Tags", ", ".join(web_tags  if isinstance(web_tags,  list) else []))
     row("Last Scanned",   config.get("last_scanned_date", "[Not Set]"))
     row("Downloader",     DOWNLOADER_MSG)
 
@@ -100,7 +105,7 @@ def start_downloader():
     if not DOWNLOADER_AVAILABLE:
         print_output("Downloader unavailable — check Downloader status in config above.")
         return
-    run_task(run_downloader, config, print_output, progress, root)
+    run_task(run_downloader, config, print_output, progress)
 
 def start_cleaner():
     run_task(run_cleaner, config, print_output)
@@ -149,27 +154,29 @@ _action_buttons += [
 ]
 
 section_label(btn_frame, "──  SETTINGS  ──")
-make_btn(btn_frame, "  Set Library Folder",  lambda: update_and_show(
-    root, config, "library_folder", "library folder",
-    ask_dir=True, refresh_fn=print_config_with_line),
-    "#1c1c1c", "#2a2a2a")
-make_btn(btn_frame, "  Set Staging Folder",  lambda: update_and_show(
-    root, config, "staging_folder", "staging folder",
-    ask_dir=True, refresh_fn=print_config_with_line),
-    "#1c1c1c", "#2a2a2a")
-make_btn(btn_frame, "  Set CSV File Path",   lambda: update_and_show(
-    root, config, "csv_path", "CSV file",
-    ask_filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")],
-    refresh_fn=print_config_with_line),
-    "#1c1c1c", "#2a2a2a")
-make_btn(btn_frame, "  Edit Song Tags List", lambda: update_and_show(
-    root, config, "song_tags", "song tags",
-    is_list=True, refresh_fn=print_config_with_line),
-    "#1c1c1c", "#2a2a2a")
-make_btn(btn_frame, "  Edit Web Tags List",  lambda: update_and_show(
-    root, config, "web_tags", "web tags",
-    is_list=True, refresh_fn=print_config_with_line),
-    "#1c1c1c", "#2a2a2a")
+_action_buttons += [
+    make_btn(btn_frame, "  Set Library Folder",  lambda: update_and_show(
+        root, config, "library_folder", "library folder",
+        ask_dir=True, refresh_fn=print_config_with_line),
+        "#1c1c1c", "#2a2a2a"),
+    make_btn(btn_frame, "  Set Staging Folder",  lambda: update_and_show(
+        root, config, "staging_folder", "staging folder",
+        ask_dir=True, refresh_fn=print_config_with_line),
+        "#1c1c1c", "#2a2a2a"),
+    make_btn(btn_frame, "  Set CSV File Path",   lambda: update_and_show(
+        root, config, "csv_path", "CSV file",
+        ask_filetypes=[("CSV Files", "*.csv"), ("All Files", "*.*")],
+        refresh_fn=print_config_with_line),
+        "#1c1c1c", "#2a2a2a"),
+    make_btn(btn_frame, "  Edit Song Tags List", lambda: update_and_show(
+        root, config, "song_tags", "song tags",
+        is_list=True, refresh_fn=print_config_with_line),
+        "#1c1c1c", "#2a2a2a"),
+    make_btn(btn_frame, "  Edit Web Tags List",  lambda: update_and_show(
+        root, config, "web_tags", "web tags",
+        is_list=True, refresh_fn=print_config_with_line),
+        "#1c1c1c", "#2a2a2a"),
+]
 
 section_label(btn_frame, "")
 make_btn(btn_frame, "  Exit", root.destroy, "#3d1b1b", "#5c2222")

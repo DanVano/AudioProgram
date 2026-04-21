@@ -1,4 +1,4 @@
-import eyed3, os, re, shutil
+import eyed3, logging, os, re, shutil
 
 from datetime import datetime
 
@@ -55,6 +55,9 @@ def clean_filename(filename, song_tags, web_tags):
     name = re.sub(r"\s{2,}", " ", name).strip()
     name = re.sub(r"^-\s*|\s*-$", "", name)    # strip leading/trailing dash
 
+    if not name:
+        return filename
+
     return f"{name}{ext}"
 
 def set_id3_tags(filepath, artist, title, print_output=None):
@@ -103,11 +106,16 @@ def parse_shazam_csv(file_path, print_output=None):
             for row in reader:
                 try:
                     tag_time = datetime.strptime(row["TagTime"], "%Y-%m-%dT%H:%M:%S")
+                    artist = (row.get("Artist") or "").strip()
+                    title  = (row.get("Title")  or "").strip()
+                    if not artist or not title:
+                        _log(f"[WARN] Skipping row with empty artist or title.")
+                        continue
                     result.append({
                         'date': tag_time,
-                        'artist': row["Artist"],
-                        'title': row["Title"],
-                        'combined_track_info': f"{row['Artist']} - {row['Title']}"
+                        'artist': artist,
+                        'title': title,
+                        'combined_track_info': f"{artist} - {title}"
                     })
                 except ValueError as ve:
                     _log(f"[WARN] Skipping row with invalid date: {row['TagTime']} — {ve}")
@@ -127,6 +135,9 @@ def move_to_library(config, print_output):
         return
     if not library_folder or not os.path.isdir(library_folder):
         print_output(f"[ERROR] Library folder not found: {library_folder or '[Not Set]'}")
+        return
+    if os.path.abspath(staging_folder) == os.path.abspath(library_folder):
+        print_output("[ERROR] Staging folder and library folder cannot be the same path.")
         return
 
     files = [f for f in os.listdir(staging_folder) if f.lower().endswith(".mp3")]
@@ -148,7 +159,7 @@ def move_to_library(config, print_output):
                 i += 1
         try:
             shutil.move(src, dst)
-            print_output(f"[MOVED] {fname}")
+            print_output(f"[MOVED] {os.path.basename(dst)}")
             moved += 1
         except Exception as e:
             print_output(f"[ERROR] Could not move {fname}: {e}")
@@ -163,7 +174,6 @@ def run_cleaner(config, print_output):
     Final line now shows:
       [INFO] ... | Errors X | Unable to load mp3 Y
     """
-    import logging
     music_folder = config.get("staging_folder")
     if not music_folder or not os.path.isdir(music_folder):
         print_output(f"[ERROR] Staging folder not found: {music_folder or '[Not Set]'}")
@@ -234,7 +244,7 @@ def run_cleaner(config, print_output):
                     skipped += 1
 
                 # Set ID3 tags when we can parse "Artist - Title"
-                base_no_ext = os.path.splitext(os.path.basename(target_path))[0]
+                base_no_ext = os.path.splitext(cleaned_name)[0]
                 if " - " in base_no_ext:
                     artist, title = base_no_ext.split(" - ", 1)
                     status = set_id3_tags(target_path, artist.strip(), title.strip(), print_output)
@@ -263,7 +273,7 @@ def run_cleaner(config, print_output):
 
     # Final summary line (renamed warning bucket)
     print_output(
-        F"\n"
+        "\n"
         f"[INFO] Files Renamed {cleaned} | "
         f"Already Clean Files {skipped} | "
         f"Title/Artist Tagged {tagged} | "

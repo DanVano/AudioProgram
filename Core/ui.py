@@ -29,7 +29,7 @@ class ProgressWrapper:
             self._value = int(val)
             if self._pulse_stop is None:          # don't fight the animation
                 frac = self._value / self._maximum if self._maximum else 0
-                self._bar.set(min(max(frac, 0.0), 1.0))
+                self._root.after(0, lambda f=frac: self._bar.set(min(max(f, 0.0), 1.0)))
         elif key == "maximum":
             self._maximum = max(int(val), 1)
 
@@ -151,10 +151,6 @@ def build_progressbar(root: ctk.CTk) -> ProgressWrapper:
     )
     bar.set(0)
     return ProgressWrapper(bar, root)
-
-
-def add_hover(widget, normal: str, hover: str):
-    pass  # CTkButton handles hover natively via hover_color — no-op kept for compat
 
 
 def center_window(win: ctk.CTk):
